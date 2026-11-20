@@ -158,7 +158,7 @@ function onMidi(e){ const [st,d1,d2]=e.data, cmd=st&0xf0;
 const KEYMAP="asdfghjkl;qwertyuiop";
 window.addEventListener('keydown',e=>{
   if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT') return;
-  if(e.key==='Escape'){ closeSamples(); closeLib(); $('help').classList.remove('show'); return; }
+  if(e.key==='Escape'){ closeSamples(); closeLib(); $('help').classList.remove('show'); $('imp').classList.remove('show'); return; }
   if(document.querySelector('.overlay.show')) return;   // 弹窗开着时不响应快捷键
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'){ e.preventDefault(); quickSave(); return; }
   const k=e.key.toLowerCase();

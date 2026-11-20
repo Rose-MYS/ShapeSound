@@ -39,6 +39,7 @@
   <div class="side-files">
     <div class="worknow" id="workNow"></div>
     <button class="pill" id="newBtn" data-tip="新建一张空白画纸（没保存的会自动存成草稿）">＋ 新建空白</button>
+    <button class="pill" id="impBtn" data-tip="导入现成的谱子：简谱文字、MusicXML、MIDI，自动画成线条">⇪ 导入谱子</button>
     <button class="pill hot" id="samplesBtn" data-tip="不知道画什么？先听一首示例曲">♪ 示例曲</button>
     <button class="pill" id="libBtn" data-tip="保存过的作品都在这里，点一下就能切换">我的作品</button>
     <button class="pill" id="save" data-tip="保存到「我的作品」（Ctrl+S）">保存</button>
@@ -108,6 +109,7 @@
     <kbd>1</kbd>–<kbd>9</kbd> 选乐器　电脑键盘当琴：<kbd>A</kbd>–<kbd>;</kbd> 从低到高，<kbd>Q</kbd>–<kbd>P</kbd> 接着往上<br>
     底部「伴奏」三个按钮：<b>•</b> 贝斯　<b>••</b> 鼓　<b>•••</b> 琶音。点一下开、再点关，可以同时开好几个；它们跟着你选的调走。<br>
     不知道从哪开始？点左边的 <b>♪ 示例曲</b>，听一首再改着玩。<br>
+    有现成的谱子？点 <b>⇪ 导入谱子</b>：粘贴简谱，或选 MusicXML / MIDI 文件，自动画成线条。<br>
     <b>1 / 2 / 3</b> 是显示模式：画线、像素（格子会随播放头亮起）、舞台（每种乐器一个格子配照片，手机宽度才出现）。<br>
     最左边的 <b>Pages</b> 打开时间线：每页一张画，点「N 小节」改这一页放几个小节，＋ 新页、复制、删除；还能叠加多条时间线一起播。<br>
     「保存」把作品存进「我的作品」，在那里可以随时切换、改名、删除，或导出成 .json 文件（<kbd>Ctrl</kbd>+<kbd>S</kbd> 快速保存）。
@@ -128,16 +130,34 @@
   <div class="works" id="workList"></div>
   <div class="dlg-foot"><button class="pill" id="libNew">新建空白作品</button><button class="pill" id="libImport">从文件导入…</button></div>
 </div></div>
+<div class="overlay" id="imp"><div class="dialog wide">
+  <button class="close" id="impClose">×</button>
+  <h2>导入谱子</h2>
+  <div class="lead">把现成的谱子自动画成线条：每个声部一种颜色，调、音阶、音域、速度都会自动设好，一页 16 拍，多页自动串成时间线。导入的谱子存进「我的作品」。</div>
+  <div class="imp-row"><button class="pill hot" id="impFile">选择文件…</button>
+    <span>MusicXML（.musicxml / .xml / .mxl）或 MIDI（.mid）。也可以直接把文件拖到网页上。</span></div>
+  <h3 class="imp-h">或者输入简谱</h3>
+  <textarea id="impText" spellcheck="false" placeholder="例如：&#10;1=C 4/4 ♩=100&#10;1 1 5 5 | 6 6 5 - | 4 4 3 3 | 2 2 1 - |"></textarea>
+  <div class="imp-help">
+    <b>1–7</b> 音　<b>0</b> 休止　<b>-</b> 延长一拍　<b>5.</b> 附点　<b>1_</b> 八分音符　<b>1__</b> 十六分　<b>1'</b> 高八度　<b>1,</b> 低八度　<b>#4 b7</b> 升降　<b>[135]</b> 和弦<br>
+    <b>1=G</b> 定调　<b>♩=90</b> 速度　另起一行写 <b>@贝斯</b>（或 @长笛、@鼓…）开始一个新声部，名字决定用什么乐器　第一行不带数字的文字当作标题
+  </div>
+  <div class="imp-err" id="impErr"></div>
+  <div class="dlg-foot"><button class="pill" id="impDemo">填入示例</button><button class="pill hot" id="impGo">生成谱子（Ctrl+Enter）</button></div>
+  <div class="imp-note">照片或 PDF 里的五线谱：网页没法直接识别。可以先用免费的 MuseScore（导入 PDF）或 Audiveris 识别，导出成 MusicXML，再从这里导入。</div>
+</div></div>
 <div id="tipbox"></div>
 <div id="toast"></div>
 <input type="file" id="openFile" accept=".json,application/json" hidden>
 <input type="file" id="photoFile" accept="image/*" hidden>
 <input type="file" id="castFile" accept="image/*" hidden>
+<input type="file" id="impInput" accept=".musicxml,.xml,.mxl,.mid,.midi,.txt" hidden>
 
 <script src="js/core.js"></script>
 <script src="js/canvas.js"></script>
 <script src="js/app.js"></script>
 <script src="js/songs.js"></script>
 <script src="js/library.js"></script>
+<script src="js/importer.js"></script>
 </body>
 </html>
