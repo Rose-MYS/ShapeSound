@@ -96,8 +96,8 @@ svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke
 #cv{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
 #hint{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:var(--muted);font-size:14px;pointer-events:none;text-align:center;line-height:1.9;transition:opacity .3s}
 
-/* 舞台模式：一格一种乐器（3 × 5） */
-#cast{position:absolute;inset:0;display:none;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(5,1fr);gap:2px;background:var(--uib)}
+/* 舞台模式：一格一种乐器（4 × 4） */
+#cast{position:absolute;inset:0;display:none;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(4,1fr);gap:2px;background:var(--uib)}
 body.mode3 #cast{display:grid}
 body.mode3 #cv{visibility:hidden}
 body.mode3 #hint{display:none}
@@ -303,7 +303,7 @@ body.noinst #inst{display:none}
     <li><b>画线就是作曲。</b>竖线（播放头）从左往右扫，碰到哪条线，哪条线就发声：越高音越高；横线是长音，斜线是琶音，竖线是和弦。</li>
     <li><b>选调和音阶。</b>打开「音符网格」能看到每一行的音名；网格里只有音阶内的音，怎么画都和谐。</li>
     <li><b>定速度。</b>拖速度条、输入 BPM，或者跟着拍子连点 Tap；节拍器可以打开听拍子。</li>
-    <li><b>颜色就是音色。</b>十五种颜色对应十五种乐器；最后一种是「鼓组」：画得越低越是底鼓，越高越是镲；接上 MIDI 键盘并打开「MIDI 输入」，播放时弹的音会画进循环里。</li>
+    <li><b>颜色就是音色。</b>十六种颜色对应十六种乐器；最后一种是「鼓组」：画得越低越是底鼓，越高越是镲；接上 MIDI 键盘并打开「MIDI 输入」，播放时弹的音会画进循环里。</li>
   </ol>
   <div class="k">
     <kbd>空格</kbd> 播放/暂停　<kbd>Ctrl</kbd>+<kbd>Z</kbd> 撤销　<kbd>Ctrl</kbd>+<kbd>Y</kbd> 重做　<kbd>Shift</kbd>+<kbd>E</kbd> 橡皮　<kbd>G</kbd> 网格<br>
@@ -361,12 +361,14 @@ const MINORISH = new Set(['minor','minPent','blues','phrygian','dorian','harmMin
 const QUANT = {'4':{label:'1/4',n:4},'8':{label:'1/8',n:8},'8t':{label:'1/8 三连音',n:12,trip:true},
   '16':{label:'1/16',n:16},'16t':{label:'1/16 三连音',n:24,trip:true},'32':{label:'1/32',n:32}};
 const SWING = {off:{label:'关',v:0},light:{label:'轻',v:.10},medium:{label:'中',v:.20},hard:{label:'重',v:.33}};
-const INSTR = ['键盘','拨弦','钟','马林巴','长笛','弦乐','风铃','贝斯','8-bit','铜管','管风琴','竖琴','电钢琴','合唱','鼓组'];
+const INSTR = ['键盘','拨弦','钟','马林巴','长笛','弦乐','风铃','贝斯','8-bit','铜管','管风琴','竖琴','电钢琴','合唱','鼓组','电吉他'];
 const NINK = INSTR.length, DRUM_INK = 14;   // 鼓组：线越低越是底鼓，越高越是镲
+// 色块的摆放顺序：鼓组放最后（编号不变，旧作品里的颜色不会乱）
+const SWATCH_ORDER = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,15,14];
 const PALETTES = [
-  ['#2a9d8f','#e2553a','#7b6cf6','#f2a23a','#3a5bd9','#e06aa8','#79bfe9','#2b2b2b','#f0bf8a','#c9a227','#8e3b46','#8cc152','#1f6f8b','#c79be0','#8a8a8a'],   // 明亮
-  ['#1e6fa8','#c8382b','#e5b23b','#2e7d5b','#9d2933','#3b3f52','#a0522d','#7fa9bd','#7e5aa8','#d9b611','#4c221b','#789262','#065279','#cca4e3','#75878a'],   // 国色：石青 朱砂 藤黄 松绿 胭脂 黛 赭石 月白 青莲 秋香 紫檀 竹青 靛蓝 丁香 苍
-  ['#00b3a4','#ff5d73','#a78bfa','#ffb020','#4f7cff','#ff7ac6','#5ad1ff','#8a8f9c','#ffd08a','#ffe14d','#c2185b','#a3e635','#22d3ee','#e9a8ff','#9ca3af'],   // 霓虹
+  ['#2a9d8f','#e2553a','#7b6cf6','#f2a23a','#3a5bd9','#e06aa8','#79bfe9','#2b2b2b','#f0bf8a','#c9a227','#8e3b46','#8cc152','#1f6f8b','#c79be0','#8a8a8a','#b5179e'],   // 明亮
+  ['#1e6fa8','#c8382b','#e5b23b','#2e7d5b','#9d2933','#3b3f52','#a0522d','#7fa9bd','#7e5aa8','#d9b611','#4c221b','#789262','#065279','#cca4e3','#75878a','#8c4356'],   // 国色：石青 朱砂 藤黄 松绿 胭脂 黛 赭石 月白 青莲 秋香 紫檀 竹青 靛蓝 丁香 苍 绛紫
+  ['#00b3a4','#ff5d73','#a78bfa','#ffb020','#4f7cff','#ff7ac6','#5ad1ff','#8a8f9c','#ffd08a','#ffe14d','#c2185b','#a3e635','#22d3ee','#e9a8ff','#9ca3af','#ff3df2'],   // 霓虹
 ];
 const PAPERS = ['paper','sky','night','photo'];
 const PAPER_NAMES = {paper:'纸',sky:'天空',night:'夜',photo:'照片'};
@@ -474,7 +476,7 @@ function ensureAudio(){
   return ctx;
 }
 
-/* 十五种乐器，全部实时合成。返回 {release(t)} 供实时演奏松键用。 */
+/* 十六种乐器，全部实时合成。返回 {release(t)} 供实时演奏松键用。 */
 // 鼓组：看这个音在当前音阶里的相对高度，决定敲哪一件鼓（0 底鼓 1 通鼓 2 军鼓 3 闭镲 4 开镲 5 吊镲）
 function drumKind(f){
   const m=69+12*Math.log2(f/440)-S.cents/100, R=rows(); let best=0;
@@ -491,6 +493,10 @@ function drumHit(ac,out,k,t,vel){
            {noise:{amp:.6,hp:4500},peak:.42,tau:.55,len:2.2}][k];                  // 吊镲
   hit(ac,out,t,{...P,peak:P.peak*vel*.75});
 }
+// 电吉他的失真曲线（tanh 软削波），每个音频环境只算一次
+const distCache=new WeakMap();
+function distCurve(ac){ let c=distCache.get(ac); if(!c){ const n=2048, k=14; c=new Float32Array(n);
+  for(let i=0;i<n;i++){ const x=i/(n-1)*2-1; c[i]=Math.tanh(k*x)/Math.tanh(k); } distCache.set(ac,c); } return c; }
 function voice(ac, out, ink, f, t, dur, vel=.8){
   if(ink===DRUM_INK){ drumHit(ac,out,drumKind(f),t,vel); return {release(){}}; }
   const g=ac.createGain(); g.gain.value=0; g.connect(out);
@@ -567,6 +573,15 @@ function voice(ac, out, ink, f, t, dur, vel=.8){
       const lp=ac.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=Math.min(f*3,5000);
       const fa=amp(1.6), la=amp(.25); mix.connect(bp1); mix.connect(bp2); mix.connect(lp); bp1.connect(fa); bp2.connect(fa); lp.connect(la); fa.connect(g); la.connect(g);
       const pk=.12*vel; G.setValueAtTime(0,t); G.linearRampToValueAtTime(pk,t+.25); G.setValueAtTime(pk,t+D); G.setTargetAtTime(0,t+D,.3); end=t+D+1.6; break; }
+    case 15:{ // 电吉他：锯齿波 + 方波 → 过载失真 → 音箱般的高低切，带一点揉弦
+      const o1=osc('sawtooth',f), o2=osc('square',f*1.005), pre=amp(1.4); o1.connect(pre); o2.connect(pre);
+      const ws=ac.createWaveShaper(); ws.curve=distCurve(ac); ws.oversample='2x';
+      const hp=ac.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=90;
+      const lp=ac.createBiquadFilter(); lp.type='lowpass'; lp.Q.value=.9;
+      lp.frequency.setValueAtTime(Math.min(f*8,4800),t); lp.frequency.setTargetAtTime(Math.min(f*4,2800),t,.3);
+      pre.connect(ws); ws.connect(hp); hp.connect(lp); lp.connect(g); vibrato(o1.frequency,5.5,f*.006,.45);
+      const pk=.1*vel; G.setValueAtTime(0,t); G.linearRampToValueAtTime(pk,t+.004); G.setTargetAtTime(pk*.65,t+.004,.25);
+      G.setValueAtTime(pk*.65,t+D); G.setTargetAtTime(0,t+D,.08); end=t+D+.5; break; }
     default:{ // 8-bit：方波，几乎没有包络
       const o=osc('square',f); o.connect(g);
       const pk=.09*vel; G.setValueAtTime(pk,t); G.setValueAtTime(pk*.8,t+.05); G.setValueAtTime(0,t+D*.92); end=t+D+.05; }
@@ -756,7 +771,7 @@ const ERASE_R=14, pointer={x:0,y:0,inside:false};
 let drawing=null, lastPreviewRow=-1, lastPreviewT=0, erasedAny=false;
 function snapshot(){ undoStack.push(JSON.stringify(strokes)); if(undoStack.length>80) undoStack.shift(); redoStack.length=0; renderUndo(); }
 function setStrokes(arr){ strokes.length=0; strokes.push(...arr); }
-function changed(){ computeEvents(); $('hint').style.opacity=strokes.length?0:1; renderUndo(); if(timelineOn) refreshThumb(); autosave(); }
+function changed(){ computeEvents(); $('hint').style.opacity=strokes.length?0:1; renderUndo(); if(timelineOn) refreshThumb(); autosave(); updateGridPulse(); }
 function renderUndo(){ $('tUndo').disabled=!undoStack.length; $('tRedo').disabled=!redoStack.length; }
 function undo(){ if(!undoStack.length) return; redoStack.push(JSON.stringify(strokes)); setStrokes(JSON.parse(undoStack.pop())); changed(); }
 function redo(){ if(!redoStack.length) return; undoStack.push(JSON.stringify(strokes)); setStrokes(JSON.parse(redoStack.pop())); changed(); }
@@ -1048,21 +1063,30 @@ $('pagesBtn').onclick=()=>setTimeline(!timelineOn);
 // ---------------- 工具栏 ----------------
 function renderSwatches(){
   const el=$('swatches'); el.innerHTML='';
-  PALETTES[S.palette].forEach((c,i)=>{ const b=document.createElement('button'); b.className='sw'+(tool==='draw'&&S.ink===i?' on':'');
+  SWATCH_ORDER.forEach(i=>{ const c=PALETTES[S.palette][i]; const b=document.createElement('button'); b.className='sw'+(tool==='draw'&&S.ink===i?' on':'');
     b.style.background=c; b.dataset.tip=INSTR[i]+(i<9?`（快捷键 ${i+1}）`:'')+(i===DRUM_INK?'：越低越是底鼓，越高越是镲':''); b.onclick=()=>setInk(i); el.appendChild(b); });
   $('timbre').textContent=tool==='erase'?'橡皮：擦掉碰到的线':'音色：'+INSTR[S.ink];
   $('tPen').classList.toggle('on',tool==='draw'); $('tErase').classList.toggle('on',tool==='erase');
 }
 function setInk(i){ S.ink=i; setTool('draw'); autosave(); ensureAudio(); const R=rows(); voice(ctx,chain.input,i,freqOf(R[Math.floor(R.length/2)]),ctx.currentTime+.01,.3,.6); }  // 换乐器时试听一声
 function setTool(t){ tool=t; cv.style.cursor=t==='erase'?'cell':'crosshair'; renderSwatches(); }
-function toggleGrid(){ S.grid=!S.grid; $('tGrid').classList.toggle('on',S.grid); try{ localStorage.setItem('xingsheng.gridTried','1'); }catch(e){} updateGridPulse(); autosave(); }
-// 用户还没点过网格按钮、而且网格是关着的 → 按钮闪一闪，提示可以打开
-function updateGridPulse(){ let tried=false; try{ tried=!!localStorage.getItem('xingsheng.gridTried'); }catch(e){}
-  $('tGrid').classList.toggle('pulse',!S.grid&&!tried); return !S.grid&&!tried; }
+function toggleGrid(){ S.grid=!S.grid; $('tGrid').classList.toggle('on',S.grid); markTried('gridTried'); autosave();
+  if(updateGridPulse()===false && $('tShuffle').classList.contains('pulse')) toast('再试试闪烁的「随机换音色」：每条线随机换一种乐器',3500); }
+// 新手引导，一次只闪一个按钮：先是「音符网格」，点过之后轮到「随机换音色」（画纸上有线时才闪），各自点过一次就不再闪
+const tried=k=>{ try{ return !!localStorage.getItem('xingsheng.'+k); }catch(e){ return true; } };
+const markTried=k=>{ try{ localStorage.setItem('xingsheng.'+k,'1'); }catch(e){} };
+function updateGridPulse(){
+  const grid=!S.grid&&!tried('gridTried');
+  const shuffle=!grid&&tried('gridTried')&&!tried('shuffleTried')&&strokes.length>0;
+  $('tGrid').classList.toggle('pulse',grid); $('tShuffle').classList.toggle('pulse',shuffle);
+  return grid; }
 $('tPen').onclick=()=>setTool('draw'); $('tErase').onclick=()=>setTool(tool==='erase'?'draw':'erase');
 $('tUndo').onclick=undo; $('tRedo').onclick=redo;
 $('tClear').onclick=()=>{ if(!strokes.length) return; snapshot(); setStrokes([]); changed(); toast('已清空，可撤销'); };
-$('tShuffle').onclick=()=>{ if(!strokes.length) return toast('先画几笔再换'); snapshot(); strokes.forEach(s=>s.ink=Math.floor(Math.random()*(NINK-1)));   /* 不随机成鼓组 */ changed(); toast('每条线都换了一种乐器'); };
+const MELODIC=SWATCH_ORDER.filter(i=>i!==DRUM_INK);   // 随机换音色时不会换成鼓组
+$('tShuffle').onclick=()=>{ if(!strokes.length) return toast('先画几笔再换'); markTried('shuffleTried'); snapshot();
+  strokes.forEach(s=>{ if(s.ink!==DRUM_INK) s.ink=MELODIC[Math.floor(Math.random()*MELODIC.length)]; }); changed(); updateGridPulse();
+  toast('每条线都换了一种乐器 · 不喜欢按 Ctrl+Z 换回来',2600); };
 $('tPalette').onclick=()=>{ S.palette=(S.palette+1)%PALETTES.length; renderSwatches(); castMask=-1; if(S.mode===3) buildCast(); renderStrip(); autosave(); toast(['明亮','国色','霓虹'][S.palette]+'配色'); };
 $('tGrid').onclick=toggleGrid;
 $('tBg').onclick=()=>{ const next=PAPERS[(PAPERS.indexOf(S.paper)+1)%PAPERS.length]; if(next==='photo'){ $('photoFile').click(); return; } setPaper(next); toast('背景：'+PAPER_NAMES[next]); };
@@ -1079,7 +1103,9 @@ function serialize(){
   return {app:'xingsheng',version:3,settings:{...S,paper:S.paper==='photo'?'paper':S.paper},
     tracks:tracks.map(t=>({pages:t.pages.map(pg=>({bars:pageBars(pg),strokes:pg.strokes})),pageIndex:t.pageIndex,collapsed:!!t.collapsed})),trackIndex,timelineOn};
 }
-function load(obj){
+let suppressLib=false;   // 正在载入别的作品时为 true：这期间不往「当前作品」里自动保存，否则会把新内容写进上一个作品
+function load(obj){ suppressLib=true; try{ loadInner(obj); } finally{ suppressLib=false; } }
+function loadInner(obj){
   if(!obj) throw new Error('文件是空的');
   let tr = obj.tracks;
   if(!tr){ // 兼容旧版文件：v2 的两张纸 → 两页；v1 的一张纸 → 一页
@@ -1153,10 +1179,11 @@ function exportMidi(){
   computeEvents();
   const PPQ=480, N=stepsPerLoop(), tps=PPQ/stepsPerBeat(), R=rows();
   const swingT=i=>QUANT[S.quant].trip||i%2===0?0:Math.round(SWING[S.swing].v*tps);
-  // GM 音色：钢琴 钢弦吉他 管钟 马林巴 长笛 弦乐 钟琴 贝斯 方波 | 铜管 管风琴 竖琴 电钢琴 合唱
-  const PROG=[0,25,14,12,73,48,9,33,80,61,19,46,4,52];
-  // 通道：乐器 0–8 → 0–8；新乐器 → 10、12–15；第 10 通道（编号 9）留给打击乐（鼓组 + 鼓伴奏）；伴奏贝斯共用 7，琶音用 11
-  const chOf=ink=>ink===DRUM_INK?9:ink<=8?ink:[10,12,13,14,15][ink-9];
+  // GM 音色：钢琴 钢弦吉他 管钟 马林巴 长笛 弦乐 钟琴 贝斯 方波 | 铜管 管风琴 竖琴 电钢琴 合唱 |（鼓组）| 失真吉他
+  const PROG=[0,25,14,12,73,48,9,33,80,61,19,46,4,52,0,30];
+  // 通道：乐器 0–8 → 0–8；铜管…合唱 → 10、12–15；电吉他 → 11；第 10 通道（编号 9）留给打击乐（鼓组 + 鼓伴奏）
+  // 16 个通道正好用满，所以伴奏贝斯和贝斯颜色共用编号 7，伴奏琶音和风铃共用编号 6
+  const chOf=ink=>ink===DRUM_INK?9:ink<=8?ink:ink===15?11:[10,12,13,14,15][ink-9];
   const GM_DRUM=[36,45,38,42,46,49];   // 底鼓 通鼓 军鼓 闭镲 开镲 吊镲
   const used=new Set(), ev=[];
   for(let i=0;i<N;i++) for(const e of events[i]){
@@ -1166,14 +1193,14 @@ function exportMidi(){
     ev.push({t:on,o:2,d:[0x90|ch,m,96]},{t:Math.max(off,on+1),o:1,d:[0x80|ch,m,0]});
   }
   for(const c of used) if(c!==DRUM_INK) ev.push({t:0,o:0,d:[0xC0|chOf(c),PROG[c]]});
-  // 伴奏：贝斯与贝斯颜色共用通道（编号 7），琶音用编号 11，鼓用打击乐通道（编号 9；GM 打击乐：36 底鼓、38 军鼓、42 闭镲）
+  // 伴奏：贝斯与贝斯颜色共用编号 7，琶音与风铃共用编号 6，鼓用打击乐通道（编号 9；GM 打击乐：36 底鼓、38 军鼓、42 闭镲）
   const note=(ch,m,on,len,v=90)=>ev.push({t:on,o:2,d:[0x90|ch,m,v]},{t:on+Math.max(1,len),o:1,d:[0x80|ch,m,0]});
   if(S.beats&1 && !used.has(7)) ev.push({t:0,o:0,d:[0xC0|7,38]});   // Synth Bass 1
-  if(S.beats&4) ev.push({t:0,o:0,d:[0xC0|11,11]});   // Vibraphone
+  if(S.beats&4 && !used.has(6)) ev.push({t:0,o:0,d:[0xC0|6,11]});   // Vibraphone
   for(let i=0;i<N;i++){ const b=beatHits(i), on=Math.round(i*tps)+swingT(i);
     if(b.bass) note(7,48+beatKey(),on,Math.round(tps*stepsPerBeat()*.5));
     if(b.kick) note(9,36,on,60,100); if(b.snare) note(9,38,on,60,90); if(b.hat) note(9,42,on,30,64);
-    if(b.arp!==null) note(11,b.arp+beatKey(),on,Math.round(tps*.9),80);
+    if(b.arp!==null) note(6,b.arp+beatKey(),on,Math.round(tps*.9),80);
   }
   ev.sort((a,b)=>a.t-b.t||a.o-b.o);
   const vlq=n=>{ const b=[n&0x7f]; while(n>>=7) b.unshift((n&0x7f)|0x80); return b; };
@@ -1567,7 +1594,8 @@ $('samples').onclick=e=>{ if(e.target.id==='samples') closeSamples(); };
 "use strict";
 /* 形声 · 我的作品（浏览器里的作品库）+ 启动 */
 // ---------------- 我的作品（保存在浏览器里，可随时切换） ----------------
-// 规则：已保存的作品 → 之后的修改自动保存；没保存的新作品 / 改过的示例曲 → 切换走时自动存成「草稿」，什么都不会丢。
+// 规则：已保存的作品 → 之后的修改自动保存；示例曲本身不能改，一动就自动另存为一个新作品（「xx（我的改编）」）；
+//       没保存的新作品 → 切换走时自动存成「草稿」。什么都不会丢。
 const LIB_KEY='xingsheng.library', CUR_KEY='xingsheng.current', MAX_DRAFTS=10;
 var currentWork=null;   // {id: 作品库里的 id 或 null, name, sample: 正在看的示例曲 id, saved: 上次保存时的内容}
 function libLoad(){ try{ return JSON.parse(localStorage.getItem(LIB_KEY))||[]; }catch(e){ return []; } }
@@ -1583,11 +1611,22 @@ function setCurrent(o){ currentWork={id:null,name:'',sample:null,...o,saved:cont
 function persistCurrent(){ try{ localStorage.setItem(CUR_KEY,JSON.stringify(currentWork)); }catch(e){} }
 function isDirty(){ return !!currentWork && hasWork() && contentJSON()!==currentWork.saved; }
 function libAutosave(){
-  if(!currentWork) return;
+  if(!currentWork || suppressLib) return;
+  if(!currentWork.id && currentWork.sample && isDirty()){ forkSample(); return; }
   if(currentWork.id && isDirty()){ const list=libLoad(), w=list.find(x=>x.id===currentWork.id);
     if(w){ w.data=serialize(); w.savedAt=Date.now(); if(libSave(list)){ currentWork.saved=contentJSON(); persistCurrent(); } }
     else { currentWork.id=null; persistCurrent(); } }
   updateWorkLabel();
+}
+// 改了示例曲：示例曲保持原样，改动另存为一个新作品，之后的修改都存进这个新作品
+function forkSample(){
+  const sample=songById(currentWork.sample); if(!sample) return;
+  const list=libLoad(), base=`${sample.title}（我的改编）`;
+  let name=base, n=2; while(list.some(w=>w.name===name)) name=`${base} ${n++}`;
+  const w={id:newId(),name,savedAt:Date.now(),data:serialize()}; list.unshift(w);
+  if(!libSave(list)) return;
+  setCurrent({id:w.id,name:w.name});
+  toast(`示例曲不会被改动，你的修改已另存为《${name}》，在「我的作品」里`,4000);
 }
 // 切换到别的作品 / 示例曲 / 新建之前调用：没保存的东西存成草稿，返回给用户看的提示
 function stashCurrent(){

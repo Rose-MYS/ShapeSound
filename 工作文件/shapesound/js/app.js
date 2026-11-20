@@ -3,21 +3,30 @@
 // ---------------- 工具栏 ----------------
 function renderSwatches(){
   const el=$('swatches'); el.innerHTML='';
-  PALETTES[S.palette].forEach((c,i)=>{ const b=document.createElement('button'); b.className='sw'+(tool==='draw'&&S.ink===i?' on':'');
+  SWATCH_ORDER.forEach(i=>{ const c=PALETTES[S.palette][i]; const b=document.createElement('button'); b.className='sw'+(tool==='draw'&&S.ink===i?' on':'');
     b.style.background=c; b.dataset.tip=INSTR[i]+(i<9?`（快捷键 ${i+1}）`:'')+(i===DRUM_INK?'：越低越是底鼓，越高越是镲':''); b.onclick=()=>setInk(i); el.appendChild(b); });
   $('timbre').textContent=tool==='erase'?'橡皮：擦掉碰到的线':'音色：'+INSTR[S.ink];
   $('tPen').classList.toggle('on',tool==='draw'); $('tErase').classList.toggle('on',tool==='erase');
 }
 function setInk(i){ S.ink=i; setTool('draw'); autosave(); ensureAudio(); const R=rows(); voice(ctx,chain.input,i,freqOf(R[Math.floor(R.length/2)]),ctx.currentTime+.01,.3,.6); }  // 换乐器时试听一声
 function setTool(t){ tool=t; cv.style.cursor=t==='erase'?'cell':'crosshair'; renderSwatches(); }
-function toggleGrid(){ S.grid=!S.grid; $('tGrid').classList.toggle('on',S.grid); try{ localStorage.setItem('xingsheng.gridTried','1'); }catch(e){} updateGridPulse(); autosave(); }
-// 用户还没点过网格按钮、而且网格是关着的 → 按钮闪一闪，提示可以打开
-function updateGridPulse(){ let tried=false; try{ tried=!!localStorage.getItem('xingsheng.gridTried'); }catch(e){}
-  $('tGrid').classList.toggle('pulse',!S.grid&&!tried); return !S.grid&&!tried; }
+function toggleGrid(){ S.grid=!S.grid; $('tGrid').classList.toggle('on',S.grid); markTried('gridTried'); autosave();
+  if(updateGridPulse()===false && $('tShuffle').classList.contains('pulse')) toast('再试试闪烁的「随机换音色」：每条线随机换一种乐器',3500); }
+// 新手引导，一次只闪一个按钮：先是「音符网格」，点过之后轮到「随机换音色」（画纸上有线时才闪），各自点过一次就不再闪
+const tried=k=>{ try{ return !!localStorage.getItem('xingsheng.'+k); }catch(e){ return true; } };
+const markTried=k=>{ try{ localStorage.setItem('xingsheng.'+k,'1'); }catch(e){} };
+function updateGridPulse(){
+  const grid=!S.grid&&!tried('gridTried');
+  const shuffle=!grid&&tried('gridTried')&&!tried('shuffleTried')&&strokes.length>0;
+  $('tGrid').classList.toggle('pulse',grid); $('tShuffle').classList.toggle('pulse',shuffle);
+  return grid; }
 $('tPen').onclick=()=>setTool('draw'); $('tErase').onclick=()=>setTool(tool==='erase'?'draw':'erase');
 $('tUndo').onclick=undo; $('tRedo').onclick=redo;
 $('tClear').onclick=()=>{ if(!strokes.length) return; snapshot(); setStrokes([]); changed(); toast('已清空，可撤销'); };
-$('tShuffle').onclick=()=>{ if(!strokes.length) return toast('先画几笔再换'); snapshot(); strokes.forEach(s=>s.ink=Math.floor(Math.random()*(NINK-1)));   /* 不随机成鼓组 */ changed(); toast('每条线都换了一种乐器'); };
+const MELODIC=SWATCH_ORDER.filter(i=>i!==DRUM_INK);   // 随机换音色时不会换成鼓组
+$('tShuffle').onclick=()=>{ if(!strokes.length) return toast('先画几笔再换'); markTried('shuffleTried'); snapshot();
+  strokes.forEach(s=>{ if(s.ink!==DRUM_INK) s.ink=MELODIC[Math.floor(Math.random()*MELODIC.length)]; }); changed(); updateGridPulse();
+  toast('每条线都换了一种乐器 · 不喜欢按 Ctrl+Z 换回来',2600); };
 $('tPalette').onclick=()=>{ S.palette=(S.palette+1)%PALETTES.length; renderSwatches(); castMask=-1; if(S.mode===3) buildCast(); renderStrip(); autosave(); toast(['明亮','国色','霓虹'][S.palette]+'配色'); };
 $('tGrid').onclick=toggleGrid;
 $('tBg').onclick=()=>{ const next=PAPERS[(PAPERS.indexOf(S.paper)+1)%PAPERS.length]; if(next==='photo'){ $('photoFile').click(); return; } setPaper(next); toast('背景：'+PAPER_NAMES[next]); };
@@ -34,7 +43,9 @@ function serialize(){
   return {app:'xingsheng',version:3,settings:{...S,paper:S.paper==='photo'?'paper':S.paper},
     tracks:tracks.map(t=>({pages:t.pages.map(pg=>({bars:pageBars(pg),strokes:pg.strokes})),pageIndex:t.pageIndex,collapsed:!!t.collapsed})),trackIndex,timelineOn};
 }
-function load(obj){
+let suppressLib=false;   // 正在载入别的作品时为 true：这期间不往「当前作品」里自动保存，否则会把新内容写进上一个作品
+function load(obj){ suppressLib=true; try{ loadInner(obj); } finally{ suppressLib=false; } }
+function loadInner(obj){
   if(!obj) throw new Error('文件是空的');
   let tr = obj.tracks;
   if(!tr){ // 兼容旧版文件：v2 的两张纸 → 两页；v1 的一张纸 → 一页
@@ -108,10 +119,11 @@ function exportMidi(){
   computeEvents();
   const PPQ=480, N=stepsPerLoop(), tps=PPQ/stepsPerBeat(), R=rows();
   const swingT=i=>QUANT[S.quant].trip||i%2===0?0:Math.round(SWING[S.swing].v*tps);
-  // GM 音色：钢琴 钢弦吉他 管钟 马林巴 长笛 弦乐 钟琴 贝斯 方波 | 铜管 管风琴 竖琴 电钢琴 合唱
-  const PROG=[0,25,14,12,73,48,9,33,80,61,19,46,4,52];
-  // 通道：乐器 0–8 → 0–8；新乐器 → 10、12–15；第 10 通道（编号 9）留给打击乐（鼓组 + 鼓伴奏）；伴奏贝斯共用 7，琶音用 11
-  const chOf=ink=>ink===DRUM_INK?9:ink<=8?ink:[10,12,13,14,15][ink-9];
+  // GM 音色：钢琴 钢弦吉他 管钟 马林巴 长笛 弦乐 钟琴 贝斯 方波 | 铜管 管风琴 竖琴 电钢琴 合唱 |（鼓组）| 失真吉他
+  const PROG=[0,25,14,12,73,48,9,33,80,61,19,46,4,52,0,30];
+  // 通道：乐器 0–8 → 0–8；铜管…合唱 → 10、12–15；电吉他 → 11；第 10 通道（编号 9）留给打击乐（鼓组 + 鼓伴奏）
+  // 16 个通道正好用满，所以伴奏贝斯和贝斯颜色共用编号 7，伴奏琶音和风铃共用编号 6
+  const chOf=ink=>ink===DRUM_INK?9:ink<=8?ink:ink===15?11:[10,12,13,14,15][ink-9];
   const GM_DRUM=[36,45,38,42,46,49];   // 底鼓 通鼓 军鼓 闭镲 开镲 吊镲
   const used=new Set(), ev=[];
   for(let i=0;i<N;i++) for(const e of events[i]){
@@ -121,14 +133,14 @@ function exportMidi(){
     ev.push({t:on,o:2,d:[0x90|ch,m,96]},{t:Math.max(off,on+1),o:1,d:[0x80|ch,m,0]});
   }
   for(const c of used) if(c!==DRUM_INK) ev.push({t:0,o:0,d:[0xC0|chOf(c),PROG[c]]});
-  // 伴奏：贝斯与贝斯颜色共用通道（编号 7），琶音用编号 11，鼓用打击乐通道（编号 9；GM 打击乐：36 底鼓、38 军鼓、42 闭镲）
+  // 伴奏：贝斯与贝斯颜色共用编号 7，琶音与风铃共用编号 6，鼓用打击乐通道（编号 9；GM 打击乐：36 底鼓、38 军鼓、42 闭镲）
   const note=(ch,m,on,len,v=90)=>ev.push({t:on,o:2,d:[0x90|ch,m,v]},{t:on+Math.max(1,len),o:1,d:[0x80|ch,m,0]});
   if(S.beats&1 && !used.has(7)) ev.push({t:0,o:0,d:[0xC0|7,38]});   // Synth Bass 1
-  if(S.beats&4) ev.push({t:0,o:0,d:[0xC0|11,11]});   // Vibraphone
+  if(S.beats&4 && !used.has(6)) ev.push({t:0,o:0,d:[0xC0|6,11]});   // Vibraphone
   for(let i=0;i<N;i++){ const b=beatHits(i), on=Math.round(i*tps)+swingT(i);
     if(b.bass) note(7,48+beatKey(),on,Math.round(tps*stepsPerBeat()*.5));
     if(b.kick) note(9,36,on,60,100); if(b.snare) note(9,38,on,60,90); if(b.hat) note(9,42,on,30,64);
-    if(b.arp!==null) note(11,b.arp+beatKey(),on,Math.round(tps*.9),80);
+    if(b.arp!==null) note(6,b.arp+beatKey(),on,Math.round(tps*.9),80);
   }
   ev.sort((a,b)=>a.t-b.t||a.o-b.o);
   const vlq=n=>{ const b=[n&0x7f]; while(n>>=7) b.unshift((n&0x7f)|0x80); return b; };

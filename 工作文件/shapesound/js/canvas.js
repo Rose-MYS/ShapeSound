@@ -94,7 +94,7 @@ const ERASE_R=14, pointer={x:0,y:0,inside:false};
 let drawing=null, lastPreviewRow=-1, lastPreviewT=0, erasedAny=false;
 function snapshot(){ undoStack.push(JSON.stringify(strokes)); if(undoStack.length>80) undoStack.shift(); redoStack.length=0; renderUndo(); }
 function setStrokes(arr){ strokes.length=0; strokes.push(...arr); }
-function changed(){ computeEvents(); $('hint').style.opacity=strokes.length?0:1; renderUndo(); if(timelineOn) refreshThumb(); autosave(); }
+function changed(){ computeEvents(); $('hint').style.opacity=strokes.length?0:1; renderUndo(); if(timelineOn) refreshThumb(); autosave(); updateGridPulse(); }
 function renderUndo(){ $('tUndo').disabled=!undoStack.length; $('tRedo').disabled=!redoStack.length; }
 function undo(){ if(!undoStack.length) return; redoStack.push(JSON.stringify(strokes)); setStrokes(JSON.parse(undoStack.pop())); changed(); }
 function redo(){ if(!redoStack.length) return; undoStack.push(JSON.stringify(strokes)); setStrokes(JSON.parse(redoStack.pop())); changed(); }

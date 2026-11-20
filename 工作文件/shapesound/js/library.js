@@ -1,7 +1,8 @@
 "use strict";
 /* 形声 · 我的作品（浏览器里的作品库）+ 启动 */
 // ---------------- 我的作品（保存在浏览器里，可随时切换） ----------------
-// 规则：已保存的作品 → 之后的修改自动保存；没保存的新作品 / 改过的示例曲 → 切换走时自动存成「草稿」，什么都不会丢。
+// 规则：已保存的作品 → 之后的修改自动保存；示例曲本身不能改，一动就自动另存为一个新作品（「xx（我的改编）」）；
+//       没保存的新作品 → 切换走时自动存成「草稿」。什么都不会丢。
 const LIB_KEY='xingsheng.library', CUR_KEY='xingsheng.current', MAX_DRAFTS=10;
 var currentWork=null;   // {id: 作品库里的 id 或 null, name, sample: 正在看的示例曲 id, saved: 上次保存时的内容}
 function libLoad(){ try{ return JSON.parse(localStorage.getItem(LIB_KEY))||[]; }catch(e){ return []; } }
@@ -17,11 +18,22 @@ function setCurrent(o){ currentWork={id:null,name:'',sample:null,...o,saved:cont
 function persistCurrent(){ try{ localStorage.setItem(CUR_KEY,JSON.stringify(currentWork)); }catch(e){} }
 function isDirty(){ return !!currentWork && hasWork() && contentJSON()!==currentWork.saved; }
 function libAutosave(){
-  if(!currentWork) return;
+  if(!currentWork || suppressLib) return;
+  if(!currentWork.id && currentWork.sample && isDirty()){ forkSample(); return; }
   if(currentWork.id && isDirty()){ const list=libLoad(), w=list.find(x=>x.id===currentWork.id);
     if(w){ w.data=serialize(); w.savedAt=Date.now(); if(libSave(list)){ currentWork.saved=contentJSON(); persistCurrent(); } }
     else { currentWork.id=null; persistCurrent(); } }
   updateWorkLabel();
+}
+// 改了示例曲：示例曲保持原样，改动另存为一个新作品，之后的修改都存进这个新作品
+function forkSample(){
+  const sample=songById(currentWork.sample); if(!sample) return;
+  const list=libLoad(), base=`${sample.title}（我的改编）`;
+  let name=base, n=2; while(list.some(w=>w.name===name)) name=`${base} ${n++}`;
+  const w={id:newId(),name,savedAt:Date.now(),data:serialize()}; list.unshift(w);
+  if(!libSave(list)) return;
+  setCurrent({id:w.id,name:w.name});
+  toast(`示例曲不会被改动，你的修改已另存为《${name}》，在「我的作品」里`,4000);
 }
 // 切换到别的作品 / 示例曲 / 新建之前调用：没保存的东西存成草稿，返回给用户看的提示
 function stashCurrent(){
