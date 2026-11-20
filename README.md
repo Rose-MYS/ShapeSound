@@ -62,4 +62,4 @@ python build.py
 
 - 玩法灵感：[playmusictheory.net/play](https://playmusictheory.net/play)
 - 照片描线的思路参考 [LingDong-/linedraw](https://github.com/LingDong-/linedraw)（MIT），代码为独立实现
-- 示例曲为公有领域曲目、原创作品或组员作品
+- 示例曲为公有领域曲目和原创作品
