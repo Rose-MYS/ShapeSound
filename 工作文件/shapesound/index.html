@@ -45,18 +45,42 @@ svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke
 .pill:hover{border-color:var(--line3)}
 .pill.hot{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
 .pill.hot:hover{filter:brightness(1.06)}
-/* 示例曲弹窗 */
-.dialog.wide{max-width:560px}
+/* 示例曲 / 我的作品 弹窗 */
+.dialog.wide{max-width:760px}
 .dialog .lead{font-size:13px;color:var(--muted);margin:-4px 0 14px;line-height:1.7}
-.songs{display:flex;flex-direction:column;gap:10px}
-.song{display:flex;gap:14px;align-items:flex-start;text-align:left;width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--uib);background:var(--paper);transition:border-color .15s,transform .1s}
+.songs{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px}
+.sgroup{margin:16px 0 8px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.sgroup:first-child{margin-top:0}
+.sgroup b{font-size:14px}
+.sgroup span{font-size:11px;color:var(--muted)}
+.song{display:flex;gap:10px;align-items:flex-start;text-align:left;width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--uib);background:var(--paper);transition:border-color .15s,transform .1s}
 .song:hover{border-color:var(--ink);transform:translateY(-1px)}
-.song .pic{flex:none;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:18px}
+.song .pic{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:15px}
 .song .t{font-size:14px;font-weight:600}
 .song .m{font-size:11px;color:var(--muted);margin:2px 0 4px}
 .song .d{font-size:12px;line-height:1.6}
 .song .d b{color:var(--accent);font-weight:600}
 .dlg-foot{margin-top:14px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.saverow{display:flex;gap:8px;flex-wrap:wrap}
+.saverow input{flex:1;min-width:160px;height:34px;border-radius:999px;border:1px solid var(--uib);background:var(--paper);padding:0 14px}
+.works{display:flex;flex-direction:column;gap:8px;margin-top:12px;max-height:48vh;overflow:auto}
+.work{display:flex;gap:12px;align-items:center;padding:8px 10px;border:1px solid var(--uib);border-radius:12px;background:var(--paper)}
+.work.cur{border-color:var(--ink)}
+.work canvas{width:96px;height:36px;border-radius:6px;border:1px solid var(--uib);flex:none}
+.winfo{flex:1;min-width:0}
+.wname{font-weight:600;cursor:text;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wname input{font-weight:600;width:100%;border:1px solid var(--uib);border-radius:6px;padding:1px 6px;background:var(--ui)}
+.wmeta{font-size:11px;color:var(--muted)}
+.wtag{display:inline-block;font-size:10px;padding:0 6px;border-radius:999px;background:var(--uib);color:var(--ink);margin-right:4px}
+.wbtns{display:flex;gap:6px;flex:none}
+.pill.sm{padding:4px 11px;font-size:12px}
+.pill.danger{background:#c0392b;color:#fff;border-color:#c0392b}
+.empty{font-size:12px;color:var(--muted);padding:18px;text-align:center;line-height:1.8}
+.worknow{font-size:11px;color:var(--muted);line-height:1.5;word-break:break-all}
+.worknow b{color:var(--ink);font-weight:600}
+/* 引导：按钮闪一闪 */
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(226,85,58,.6)}70%{box-shadow:0 0 0 6px rgba(226,85,58,0)}100%{box-shadow:0 0 0 0 rgba(226,85,58,0)}}
+.ib.pulse{animation:pulse 1.3s ease-out infinite;border-color:var(--accent);color:var(--accent)}
 #rec::before{content:"●";color:var(--accent);margin-right:5px}
 #rec.on{background:var(--accent);color:#fff;border-color:var(--accent)}
 #rec.on::before{color:#fff;animation:blink 1s infinite}
@@ -208,16 +232,17 @@ body.noinst #inst{display:none}
   <div class="g3">
     <button class="ib" id="tPalette" data-tip="换一套颜色">
       <svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 100 18c1.1 0 1.6-.8 1.6-1.6 0-1.3-1.2-1.6-1.2-2.8 0-1 .8-1.6 1.8-1.6H17a4 4 0 004-4c0-4.4-4-8-9-8z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="15" cy="7.5" r="1"/></svg></button>
-    <button class="ib" id="tGrid" data-tip="音符网格">
+    <button class="ib" id="tGrid" data-tip="音符网格：显示每一行是什么音（G）">
       <svg viewBox="0 0 24 24"><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg></button>
     <button class="ib" id="tBg" data-tip="换背景">
       <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 16l5-5 4 4 3-3 6 6"/><circle cx="16" cy="9" r="1.5"/></svg></button>
   </div>
   <div class="sp"></div>
   <div class="side-files">
+    <div class="worknow" id="workNow"></div>
     <button class="pill hot" id="samplesBtn" data-tip="不知道画什么？先听一首示例曲">♪ 示例曲</button>
-    <button class="pill" id="save">保存作品</button>
-    <button class="pill" id="open">打开作品</button>
+    <button class="pill" id="libBtn" data-tip="保存过的作品都在这里，点一下就能切换">我的作品</button>
+    <button class="pill" id="save" data-tip="保存到「我的作品」（Ctrl+S）">保存</button>
     <button class="pill" id="rec">录音</button>
   </div>
   <div class="credit">形声 · 一件可视化乐器<br>课程项目 · 2026</div>
@@ -286,15 +311,23 @@ body.noinst #inst{display:none}
     不知道从哪开始？点左边的 <b>♪ 示例曲</b>，听一首再改着玩。<br>
     <b>1 / 2 / 3</b> 是显示模式：画线、像素（格子会随播放头亮起）、舞台（九宫格配照片，手机宽度才出现）。<br>
     最左边的 <b>Pages</b> 打开时间线：每页一张画，点「N 小节」改这一页放几个小节，＋ 新页、复制、删除；还能叠加多条时间线一起播。<br>
-    「保存作品」会下载 .json 文件，所有页都在里面。
+    「保存」把作品存进「我的作品」，在那里可以随时切换、改名、删除，或导出成 .json 文件（<kbd>Ctrl</kbd>+<kbd>S</kbd> 快速保存）。
   </div>
 </div></div>
 <div class="overlay" id="samples"><div class="dialog wide">
   <button class="close" id="samplesClose">×</button>
   <h2 id="samplesTitle">示例曲</h2>
-  <div class="lead" id="samplesLead">点一首就会自动播放。每一条短横线就是一个音：越高音越高，越长音越长。听完照着提示改一改，就是你自己的版本了。</div>
-  <div class="songs" id="songList"></div>
-  <div class="dlg-foot"><button class="pill" id="restoreMine" hidden>回到我之前的作品</button><button class="pill" id="samplesSkip">我自己画</button></div>
+  <div class="lead" id="samplesLead">点一首就会自动播放。线越高音越高，横线越长音越长。听完照着「试试」改一改，就是你自己的版本了。你画的东西不会丢：没保存的会自动存进「我的作品」。</div>
+  <div id="songList"></div>
+  <div class="dlg-foot"><button class="pill" id="samplesSkip">新建空白，自己画</button></div>
+</div></div>
+<div class="overlay" id="lib"><div class="dialog wide">
+  <button class="close" id="libClose">×</button>
+  <h2>我的作品</h2>
+  <div class="lead">作品保存在这个浏览器里，刷新、关掉网页都还在。已保存的作品之后的修改会<b>自动保存</b>；没保存的新作品，切换时会自动存成<b>草稿</b>。换电脑或清理浏览器数据前，记得点「导出」备份成文件。</div>
+  <div class="saverow"><input id="libName" maxlength="40" placeholder="给当前作品起个名字"><button class="pill hot" id="libSave">保存当前作品</button><button class="pill" id="libSaveNew" hidden>另存为新作品</button></div>
+  <div class="works" id="workList"></div>
+  <div class="dlg-foot"><button class="pill" id="libNew">新建空白作品</button><button class="pill" id="libImport">从文件导入…</button></div>
 </div></div>
 <div id="tipbox"></div>
 <div id="toast"></div>
@@ -319,6 +352,7 @@ const SCALES = {
   harmMinor:{name:'和声小调',iv:[0,2,3,5,7,8,11]},dorian:{name:'Dorian 多利亚',iv:[0,2,3,5,7,9,10]},
   phrygian:{name:'Phrygian 弗里几亚',iv:[0,1,3,5,7,8,10]}, lydian:{name:'Lydian 利底亚',iv:[0,2,4,6,7,9,11]},
   mixolydian:{name:'Mixolydian 混合利底亚',iv:[0,2,4,5,7,9,10]}, blues:{name:'布鲁斯',iv:[0,3,5,6,7,10]},
+  chromatic:{name:'半音阶（全部 12 个音）',iv:[0,1,2,3,4,5,6,7,8,9,10,11]},
 };
 const MINORISH = new Set(['minor','minPent','blues','phrygian','dorian','harmMinor']);
 const QUANT = {'4':{label:'1/4',n:4},'8':{label:'1/8',n:8},'8t':{label:'1/8 三连音',n:12,trip:true},
@@ -350,7 +384,7 @@ let undoStack = [], redoStack = [];
 // ---------------- 小工具 ----------------
 const $ = id => document.getElementById(id);
 const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
-function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove('show'),1800); }
+function toast(m,ms=1800){ const t=$('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove('show'),ms); }
 function download(blob,name){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href); a.remove();},1000); }
 function stamp(){ const d=new Date(),p=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}`; }
 
@@ -732,8 +766,9 @@ function onMidi(e){ const [st,d1,d2]=e.data, cmd=st&0xf0;
 const KEYMAP="asdfghjkl;qwertyuiop";
 window.addEventListener('keydown',e=>{
   if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT') return;
-  if(e.key==='Escape'){ closeSamples(); $('help').classList.remove('show'); return; }
-  if($('samples').classList.contains('show')) return;   // 示例曲弹窗开着时不响应快捷键
+  if(e.key==='Escape'){ closeSamples(); closeLib(); $('help').classList.remove('show'); return; }
+  if(document.querySelector('.overlay.show')) return;   // 弹窗开着时不响应快捷键
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'){ e.preventDefault(); quickSave(); return; }
   const k=e.key.toLowerCase();
   if((e.ctrlKey||e.metaKey)&&k==='z'){ e.preventDefault(); e.shiftKey?redo():undo(); return; }
   if((e.ctrlKey||e.metaKey)&&k==='y'){ e.preventDefault(); redo(); return; }
@@ -962,7 +997,10 @@ function renderSwatches(){
 }
 function setInk(i){ S.ink=i; setTool('draw'); autosave(); ensureAudio(); const R=rows(); voice(ctx,chain.input,i,freqOf(R[Math.floor(R.length/2)]),ctx.currentTime+.01,.3,.6); }  // 换乐器时试听一声
 function setTool(t){ tool=t; cv.style.cursor=t==='erase'?'cell':'crosshair'; renderSwatches(); }
-function toggleGrid(){ S.grid=!S.grid; $('tGrid').classList.toggle('on',S.grid); autosave(); }
+function toggleGrid(){ S.grid=!S.grid; $('tGrid').classList.toggle('on',S.grid); try{ localStorage.setItem('xingsheng.gridTried','1'); }catch(e){} updateGridPulse(); autosave(); }
+// 用户还没点过网格按钮、而且网格是关着的 → 按钮闪一闪，提示可以打开
+function updateGridPulse(){ let tried=false; try{ tried=!!localStorage.getItem('xingsheng.gridTried'); }catch(e){}
+  $('tGrid').classList.toggle('pulse',!S.grid&&!tried); return !S.grid&&!tried; }
 $('tPen').onclick=()=>setTool('draw'); $('tErase').onclick=()=>setTool(tool==='erase'?'draw':'erase');
 $('tUndo').onclick=undo; $('tRedo').onclick=redo;
 $('tClear').onclick=()=>{ if(!strokes.length) return; snapshot(); setStrokes([]); changed(); toast('已清空，可撤销'); };
@@ -1000,14 +1038,15 @@ function load(obj){
     pageIndex:t.pageIndex|0,played:0,collapsed:!!t.collapsed}));
   trackIndex=clamp(obj.trackIndex|0,0,tracks.length-1); syncStrokes(); undoStack=[]; redoStack=[];
   setTimeline(!!obj.timelineOn); setMode(S.mode);
-  setPaper(S.paper||'paper'); setBpm(S.bpm); $('tGrid').classList.toggle('on',S.grid);
+  setPaper(S.paper||'paper'); setBpm(S.bpm); $('tGrid').classList.toggle('on',S.grid); updateGridPulse();
   renderInst(); renderSwatches(); changed(); if(S.midi) setMidi(true);
 }
-function autosave(){ try{ localStorage.setItem('xingsheng.v3',JSON.stringify(serialize())); }catch(e){} }
-$('save').onclick=()=>{ download(new Blob([JSON.stringify(serialize())],{type:'application/json'}),`形声-${stamp()}.json`); toast('作品已下载为 .json'); };
-$('open').onclick=()=>$('openFile').click();
+function autosave(){ try{ localStorage.setItem('xingsheng.v3',JSON.stringify(serialize())); }catch(e){} libAutosave(); }
+// 从文件导入：放进「我的作品」并打开
 $('openFile').onchange=e=>{ const f=e.target.files[0]; if(!f) return;
-  f.text().then(t=>{ load(JSON.parse(t)); toast('已打开：'+f.name); }).catch(err=>toast('打开失败：'+err.message)); e.target.value=''; };
+  f.text().then(t=>{ const obj=JSON.parse(t); const msg=stashCurrent(); if(playing) pause(); load(obj);
+    setCurrent({}); saveCurrent(f.name.replace(/\.json$/i,''),true,true); closeLib(); toast(`已导入《${currentWork.name}》`+(msg?'。'+msg:''),msg?4000:1800); })
+   .catch(err=>toast('导入失败：'+err.message)); e.target.value=''; };
 
 // ---------------- 录音（实时） ----------------
 let recorder=null, recChunks=[];
@@ -1108,95 +1147,201 @@ $('help').onclick=e=>{ if(e.target.id==='help') $('help').classList.remove('show
 })();
 
 // ---------------- 示例曲 ----------------
-// 记谱：[行, 拍数]，行 0 = C4 … 7 = C5 … 14 = C6（C 大调、2 个八度）；贝斯颜色会自动低一个八度。
-// 一页 = 16 拍；每个音画成一小段横线，尾巴留一点空，同音连弹也能分开。
-const SONG_PAGE=16;
-function songStrokes(notes,ink,offset=0,loop=0){
-  const out=[]; let b=offset;
-  for(const [r,d] of notes){
-    if(r!==null){ let st=b; if(loop) st=((st%loop)+loop)%loop;
-      const pg=Math.floor(st/SONG_PAGE), lb=st-pg*SONG_PAGE, y=+(1-r/14).toFixed(4);
-      const x0=+((lb+.08)/SONG_PAGE).toFixed(4), x1=+((lb+d-.6)/SONG_PAGE).toFixed(4);
-      out.push({pg,s:{ink,pts:d>=1?[[x0,y],[x1,y]]:[[x0,y]]}}); }
-    b+=d;
+// 记谱：[行, 时值]，行号从最低音 0 往上数；null 是休止。时值的单位由每首曲子自己定（拍 / 步）。
+// 一页 = 16 拍；每个音画成一小段横线，尾巴留一步空，同音连弹也能分开。
+function songStrokes(notes,ink,o={}){
+  const spb=o.spb||2, mul=o.mul||spb, P=16*spb, top=o.top||14, out=[];
+  let st=(o.offset||0)*mul; const loop=(o.loop||0)*mul;
+  for(const [r,d0] of notes){ const d=d0*mul;
+    if(r!==null){ let s0=loop?((st%loop)+loop)%loop:st;
+      const pg=Math.floor(s0/P), ls=s0-pg*P, y=+(1-r/top).toFixed(4);
+      const x0=+((ls+.15)/P).toFixed(4), x1=+((ls+d-1-.15)/P).toFixed(4);
+      out.push({pg,s:{ink,pts:d>=2?[[x0,y],[x1,y]]:[[x0,y]]}}); }
+    st+=d;
   }
   return out;
 }
 const rep=(a,n)=>Array.from({length:n},()=>a).flat();
+// 画画用的小工具
+const P2=(x,y)=>[+clamp(x,0,.999).toFixed(4),+clamp(y,0,1).toFixed(4)];
+function curve(f,n,a=0,b=1){ const pts=[]; for(let i=0;i<=n;i++) pts.push(P2(...f(a+(b-a)*i/n))); return pts; }
+function ellipse(cx,cy,rx,ry,n=40,a0=0,a1=Math.PI*2){ return curve(t=>[cx+rx*Math.cos(t),cy+ry*Math.sin(t)],n,a0,a1); }
+function heart(cx,cy,w,h,n=56){ return curve(t=>{ const X=16*Math.sin(t)**3, Y=13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t); return [cx+X/16*w, cy-Y/17*h]; },n,0,Math.PI*2); }
+function rng(seed){ return ()=>{ seed=seed+0x6D2B79F5|0; let t=Math.imul(seed^seed>>>15,1|seed); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+const PENT={scale:'majPent',range:3,quant:'16'};   // 画画类：大调五声（怎么画都好听）、3 个八度（16 行）
+
+const SONG_GROUPS=[
+  {name:'简单儿歌', hint:'一听就会，第一次玩从这里开始', ids:['twinkle','tigers','birthday','jingle']},
+  {name:'经典名曲 · 挑战', hint:'音更多、更密，看看画面能有多复杂', ids:['ode','canon','elise']},
+  {name:'搞怪 · 好玩', hint:'不按常理出牌，居然也挺好听', ids:['rain','cat','chip','coaster']},
+  {name:'像画一样的谱子', hint:'先是一幅画，按下播放才发现是音乐', ids:['smile','heart','waves','sunset']},
+];
 const SONGS=[
-  { id:'twinkle', title:'小星星', icon:'★', ink:0, meta:'C 大调 · 键盘 + 贝斯 · 3 页 · 最适合第一次玩',
-    tip:'每一小段横线就是一个音。<b>试试：</b>点左边的橡皮擦掉几个音，再换个颜色自己画回去，听听有什么不同。',
-    bpm:100, beats:0,
+  // ---------- 简单儿歌（C 大调、2 个八度：行 0 = C4，7 = C5，14 = C6；贝斯颜色自动低一个八度） ----------
+  { id:'twinkle', title:'小星星', icon:'★', ink:0, meta:'键盘 + 贝斯 · 3 页',
+    tip:'<b>试试：</b>用橡皮擦掉几个音，换个颜色自己画回去。', settings:{bpm:100},
     parts:()=>{ const L1=[[7,1],[7,1],[11,1],[11,1],[12,1],[12,1],[11,2]], L2=[[10,1],[10,1],[9,1],[9,1],[8,1],[8,1],[7,2]],
                       L3=[[11,1],[11,1],[10,1],[10,1],[9,1],[9,1],[8,2]];
       const B1=[[0,2],[0,2],[3,2],[0,2]], B2=[[3,2],[0,2],[4,2],[0,2]], B3=[[0,2],[3,2],[0,2],[4,2]];
       return [...songStrokes([...L1,...L2,...L3,...L3,...L1,...L2],0), ...songStrokes([...B1,...B2,...B3,...B3,...B1,...B2],7)]; } },
-  { id:'ode', title:'欢乐颂', icon:'♫', ink:4, meta:'C 大调 · 长笛 + 贝斯 · 2 页 · 贝多芬',
-    tip:'旋律几乎是一步一步走的，所以线条像爬楼梯。<b>试试：</b>选「风铃」，在最上面画一条长长的波浪线当装饰。',
-    bpm:110, beats:0,
-    parts:()=>{ const A=[[9,1],[9,1],[10,1],[11,1],[11,1],[10,1],[9,1],[8,1],[7,1],[7,1],[8,1],[9,1]];
-      const mel=[...A,[9,1.5],[8,.5],[8,2],...A,[8,1.5],[7,.5],[7,2]];
-      const bass=[[0,2],[0,2],[4,2],[4,2],[0,2],[0,2],[0,2],[4,2], [0,2],[0,2],[4,2],[4,2],[0,2],[0,2],[4,2],[0,2]];
-      return [...songStrokes(mel,4), ...songStrokes(bass,7)]; } },
-  { id:'tigers', title:'两只老虎（轮唱）', icon:'🐯', ink:1, meta:'C 大调 · 拨弦 + 马林巴 + 贝斯 · 2 页 · 法国民歌',
-    tip:'两种颜色画的是同一段旋律，第二种晚两小节进来，就成了轮唱。<b>试试：</b>换一种颜色，再晚两小节画第三遍。',
-    bpm:130, beats:0,
+  { id:'tigers', title:'两只老虎（轮唱）', icon:'🐯', ink:1, meta:'拨弦 + 马林巴 + 贝斯 · 2 页',
+    tip:'两种颜色是同一段旋律，晚两小节进来就成了轮唱。<b>试试：</b>换个颜色画第三遍。', settings:{bpm:130},
     parts:()=>{ const mel=[...rep([[7,1],[8,1],[9,1],[7,1]],2), ...rep([[9,1],[10,1],[11,2]],2),
                          ...rep([[11,.5],[12,.5],[11,.5],[10,.5],[9,1],[7,1]],2), ...rep([[7,1],[4,1],[7,2]],2)];
-      return [...songStrokes(mel,1), ...songStrokes(mel,3,8,32), ...songStrokes(rep([[0,2],[4,2]],8),7)]; } },
-  { id:'jingle', title:'铃儿响叮当', icon:'🔔', ink:2, meta:'C 大调 · 钟 + 贝斯 + 鼓伴奏 · 4 页',
-    tip:'这首已经打开了底部的 <b>••</b> 鼓伴奏。<b>试试：</b>再把 <b>•</b> 贝斯、<b>•••</b> 琶音也点开，或者拖一拖速度条。',
-    bpm:140, beats:2,
+      return [...songStrokes(mel,1), ...songStrokes(mel,3,{offset:8,loop:32}), ...songStrokes(rep([[0,2],[4,2]],8),7)]; } },
+  { id:'birthday', title:'生日快乐', icon:'🎂', ink:6, meta:'风铃 + 贝斯 · 2 页 · 三拍子',
+    tip:'三拍子的歌。<b>试试：</b>把速度拖慢一点，再打开 <b>•••</b> 琶音。', settings:{quant:'8t',bpm:150},
+    // 时值单位 = 步（1/8 三连音量化，一拍 3 步）；四分音符 = 4 步，一小节 12 步，一页 4 小节
+    parts:()=>{ const o={spb:3,mul:1};
+      const mel=[[5,4],[4,4],[7,4], [6,8],[4,3],[4,1], [5,4],[4,4],[8,4], [7,8],[4,3],[4,1],
+                 [11,4],[9,4],[7,4], [6,4],[5,4],[10,3],[10,1], [9,4],[7,4],[8,4], [7,8],[4,3],[4,1]];
+      const bass=[0,4,4,0,0,3,4,0].map(r=>[r,12]);
+      return [...songStrokes(mel,6,o), ...songStrokes(bass,7,o)]; } },
+  { id:'jingle', title:'铃儿响叮当', icon:'🔔', ink:2, meta:'钟 + 贝斯 + 鼓伴奏 · 4 页',
+    tip:'已经打开了 <b>••</b> 鼓。<b>试试：</b>再点开 <b>•</b> 贝斯和 <b>•••</b> 琶音。', settings:{bpm:140,beats:2},
     parts:()=>{ const b12=rep([[9,1],[9,1],[9,2]],2), b34=[[9,1],[11,1],[7,1.5],[8,.5],[9,4]],
                       b56=[[10,1],[10,1],[10,1.5],[10,.5],[10,1],[9,1],[9,1],[9,.5],[9,.5]];
       const mel=[...b12,...b34,...b56,[9,1],[8,1],[8,1],[9,1],[8,2],[11,2], ...b12,...b34,...b56,[11,1],[11,1],[10,1],[8,1],[7,4]];
       const C=[[0,2],[4,2]], F=[[3,2],[0,2]], D=[[1,2],[5,2]], G=[[4,2],[1,2]];
       const bass=[...C,...C,...C,...C,...F,...C,...D,...G, ...C,...C,...C,...C,...F,...C,...G,[0,4]];
       return [...songStrokes(mel,2), ...songStrokes(bass,7)]; } },
-  { id:'doodle', title:'随手画（不用懂乐谱）', icon:'✎', ink:0, meta:'大调五声 · 多种乐器 · 1 页',
-    tip:'五声音阶怎么画都好听。横线是长音，斜线会滑过一串音，点一下是一声。<b>试试：</b>清空，闭上眼睛乱画一通再播放。',
-    bpm:120, beats:0, settings:{scale:'majPent',range:3,quant:'8t',grid:false},
-    pages:[[
-      {ink:0,pts:[[.03,.80],[.12,.62],[.20,.48],[.27,.56],[.34,.36],[.42,.44],[.48,.28]]},
-      {ink:7,pts:[[.02,.96],[.24,.96]]},{ink:7,pts:[[.26,.90],[.48,.90]]},
-      {ink:6,pts:[[.55,.22]]},{ink:6,pts:[[.68,.30]]},{ink:6,pts:[[.82,.18]]},
-      {ink:3,pts:[[.53,.70],[.60,.55],[.67,.66],[.75,.48],[.83,.60],[.97,.40]]},
-      {ink:5,pts:[[.52,.84],[.98,.84]]} ]] },
+
+  // ---------- 经典名曲 · 挑战 ----------
+  { id:'ode', title:'欢乐颂', icon:'♫', ink:4, meta:'贝多芬 · 长笛 + 贝斯 · 2 页',
+    tip:'旋律一步一步走，线条像爬楼梯。<b>试试：</b>选风铃，在上面画一条波浪当装饰。', settings:{bpm:110},
+    parts:()=>{ const A=[[9,1],[9,1],[10,1],[11,1],[11,1],[10,1],[9,1],[8,1],[7,1],[7,1],[8,1],[9,1]];
+      const mel=[...A,[9,1.5],[8,.5],[8,2],...A,[8,1.5],[7,.5],[7,2]];
+      const bass=[0,0,4,4,0,0,0,4, 0,0,4,4,0,0,4,0].map(r=>[r,2]);
+      return [...songStrokes(mel,4), ...songStrokes(bass,7)]; } },
+  { id:'canon', title:'卡农', icon:'🎻', ink:5, meta:'帕赫贝尔 · 三个声部依次进来 · 3 页',
+    tip:'同一段旋律，三种颜色一页晚一页地叠上去。<b>试试：</b>打开 Pages，看三页怎么越来越满。',
+    settings:{key:2,range:3,bpm:84},
+    // D 大调、3 个八度：行 0 = D3，7 = D4，14 = D5，21 = D6
+    parts:()=>{ const o=x=>({top:21,offset:x});
+      const bass=[7,4,5,2,3,0,3,4].map(r=>[r,2]);
+      const v1=[16,15,14,13,12,11,12,13].map(r=>[r,2]), v2=[14,13,12,11,10,9,10,8].map(r=>[r,2]);
+      const v3=[7,9,11,10,9,7,9,8,7,5,7,11,10,12,11,10].map(r=>[r,1]);
+      return [...[0,16,32].flatMap(x=>songStrokes(bass,7,o(x))),
+              ...songStrokes(v1,5,o(0)), ...songStrokes(v2,5,o(16)), ...songStrokes(v3,5,o(32)),
+              ...songStrokes(v1,4,o(16)), ...songStrokes(v2,4,o(32)), ...songStrokes(v1,0,o(32))]; } },
+  { id:'elise', title:'致爱丽丝', icon:'🎹', ink:0, meta:'贝多芬 · 半音阶 · 十六分音符 · 1 页',
+    tip:'开头那串 E–D♯ 来回跳，要用到「半音阶」。<b>试试：</b>打开网格，找找哪两行是 E 和 D♯。',
+    settings:{key:4,scale:'chromatic',range:3,octave:-1,quant:'8t',bpm:140},
+    // 半音阶、3 个八度、低一个八度：行 0 = E2 … 36 = E5。时值单位 = 十六分音符（1 步），一小节（3/8）6 步，一页 8 小节
+    parts:()=>{ const o={spb:3,mul:1,top:36};
+      const b1=[[36,1],[35,1],[36,1],[31,1],[34,1],[32,1]], b2=[[29,2],[null,1],[20,1],[24,1],[29,1]],
+            b3=[[31,2],[null,1],[24,1],[28,1],[31,1]], b4=[[32,2],[null,1],[24,1],[36,1],[35,1]],
+            b7=[[31,2],[null,1],[24,1],[32,1],[31,1]], b8=[[29,2],[null,2],[36,1],[35,1]];
+      const LA=[[5,1],[12,1],[17,1],[null,3]], LE=[[0,1],[12,1],[16,1],[null,3]], R6=[[null,6]];
+      return [...songStrokes([...b1,...b2,...b3,...b4,...b1,...b2,...b7,...b8],0,o),
+              ...songStrokes([...R6,...LA,...LE,...LA,...R6,...LA,...LE,...LA],3,o)]; } },
+
+  // ---------- 搞怪 · 好玩 ----------
+  { id:'rain', title:'下雨啦（全是点）', icon:'☔', ink:6, meta:'一根线都没有 · 2 页',
+    tip:'每个点都是一滴雨，五声音阶怎么落都好听。<b>试试：</b>闭着眼睛在空白处乱点。',
+    settings:{...PENT,bpm:84},
+    pages:()=>[7,23].map(seed=>{ const r=rng(seed), out=[];
+      for(let i=0;i<64;i++){
+        if(r()<.42){ const row=7+Math.floor(r()*9); out.push({ink:r()<.7?6:4,pts:[P2((i+.3)/64,1-row/15)]}); }
+        if(i%8===0) out.push({ink:3,pts:[P2((i+.3)/64,1-Math.floor(r()*4)/15)]});   // 低音「滴答」
+      }
+      return out; }) },
+  { id:'cat', title:'猫在键盘上散步', icon:'🐾', ink:0, meta:'随机乱走的点 · 2 页',
+    tip:'小猫一步一步走，偶尔一跳，最后一屁股坐在键盘上。<b>试试：</b>把速度拉到最快。',
+    settings:{...PENT,quant:'8',bpm:120},
+    pages:()=>[3,9].map(seed=>{ const r=rng(seed), out=[]; let row=8;
+      for(let i=0;i<31;i++){ const u=r(); if(u<.15) continue;            // 停下来舔爪子
+        if(u<.25) row+=(r()<.5?-1:1)*(5+Math.floor(r()*3));               // 跳一下
+        else row+=[-2,-1,1,2][Math.floor(r()*4)];                          // 走一步
+        row=clamp(row,1,15); out.push({ink:i%2?8:0,pts:[P2((i+.3)/32,1-row/15)]}); }
+      out.push({ink:7,pts:[P2(.982,1-12/15),P2(.982,1-3/15)]});             // 坐到键盘上：一个和弦
+      return out; }) },
+  { id:'chip', title:'8-bit 小冒险', icon:'👾', ink:8, meta:'原创 · 像老游戏机 · 鼓伴奏 · 2 页',
+    tip:'快速上下跳的音就是老游戏机的味道。<b>试试：</b>点「随机换音色」，听听像不像别的游戏。',
+    settings:{bpm:150,beats:2},
+    parts:()=>{ const A=[[7,.5],[9,.5],[11,.5],[14,.5],[11,.5],[9,.5],[7,1]], B=[[8,.5],[10,.5],[12,.5],[10,.5],[8,1],[null,1]],
+                      C=[[9,.5],[11,.5],[13,.5],[11,.5],[9,.5],[11,.5],[13,1]], D=[[14,.5],[13,.5],[12,.5],[11,.5],[12,1],[11,1]],
+                      E=[[9,.5],[9,.5],[11,.5],[9,.5],[7,.5],[9,.5],[8,1]], F=[[7,.5],[11,.5],[14,1],[7,2]];
+      const hop=(r,n=4)=>rep([[r,.5],[r+7,.5]],n);
+      const bass=[...hop(0),...hop(1),...hop(2),...hop(4),...hop(0),...hop(1),...hop(0,2),...hop(4,2),...hop(0)];
+      return [...songStrokes([...A,...B,...C,...D,...A,...B,...E,...F],8), ...songStrokes(bass,7)]; } },
+  { id:'coaster', title:'过山车', icon:'🎢', ink:8, meta:'一条长长的斜线 · 1 页',
+    tip:'慢慢爬坡是一级一级往上，俯冲就是一大把音一起滑下来。<b>试试：</b>自己画一个更疯狂的。',
+    settings:{...PENT,bpm:96},
+    pages:()=>{ const track=[P2(.01,.9),P2(.26,.1),P2(.33,.86),P2(.41,.42),P2(.47,.78),
+        ...curve(t=>[.56+.06*Math.cos(t)+.05*(Math.PI/2-t)/(2*Math.PI), .52+.24*Math.sin(t)],28,Math.PI/2,Math.PI/2-2*Math.PI),
+        ...curve(t=>[.68+.31*t, .76-.16*Math.abs(Math.sin(t*Math.PI*3))*(1-t*.6)],30)];
+      return [[ {ink:8,pts:track},
+        ...[.08,.18,.37,.75,.9].map(x=>({ink:7,pts:[P2(x,.97),P2(x,.86)]})),   // 支架
+        {ink:1,pts:[P2(.26,.04)]},{ink:1,pts:[P2(.275,.04)]} ]]; } },          // 尖叫！
+
+  // ---------- 像画一样的谱子 ----------
+  { id:'smile', title:'笑脸和气球', icon:'☺', ink:3, meta:'圆圈会变成上下两条旋律 · 1 页',
+    tip:'圆圈的上半圈和下半圈同时响，就成了两个声部。<b>试试：</b>给它画上头发。',
+    settings:{...PENT,bpm:84},
+    pages:()=>[[ {ink:3,pts:ellipse(.5,.48,.17,.4,48)},
+      {ink:4,pts:ellipse(.44,.35,.018,.055,12)},{ink:4,pts:ellipse(.56,.35,.018,.055,12)},
+      {ink:1,pts:ellipse(.5,.5,.1,.2,20,.15*Math.PI,.85*Math.PI)},
+      {ink:5,pts:[P2(.39,.57)]},{ink:5,pts:[P2(.61,.57)]},
+      {ink:1,pts:ellipse(.13,.26,.055,.15,24)},{ink:7,pts:curve(t=>[.13+.015*Math.sin(t*12),.41+.45*t],14)},
+      {ink:4,pts:ellipse(.87,.3,.055,.15,24)},{ink:7,pts:curve(t=>[.87+.015*Math.sin(t*12),.45+.41*t],14)},
+      {ink:2,pts:ellipse(.25,.2,.035,.09,18)},{ink:7,pts:[P2(.25,.29),P2(.24,.6)]} ]] },
+  { id:'heart', title:'爱心', icon:'♥', ink:1, meta:'一大两小三颗心 · 1 页',
+    tip:'心形的尖儿会响成一串滑音。<b>试试：</b>在中间再画一颗小心。',
+    settings:{...PENT,bpm:80},
+    pages:()=>[[ {ink:1,pts:heart(.5,.42,.17,.4)}, {ink:5,pts:heart(.5,.45,.09,.2,40)},
+      {ink:5,pts:heart(.15,.4,.06,.15,32)}, {ink:5,pts:heart(.85,.4,.06,.15,32)},
+      ...[[.06,.15],[.3,.1],[.7,.12],[.94,.18],[.24,.75],[.78,.78]].map(([x,y])=>({ink:6,pts:[P2(x,y)]})),
+      {ink:2,pts:curve(t=>[.01+.98*t,.93-.03*Math.sin(t*Math.PI*6)],40)} ]] },
+  { id:'waves', title:'海浪', icon:'🌊', ink:4, meta:'三条波浪 · 1 页',
+    tip:'波浪一上一下，就是一段段起伏的旋律。<b>试试：</b>把其中一条换成贝斯颜色。',
+    settings:{...PENT,bpm:76},
+    pages:()=>[[ {ink:6,pts:curve(t=>[.01+.98*t,.38+.06*Math.sin(2*Math.PI*3*t+1)],48)},
+      {ink:4,pts:curve(t=>[.01+.98*t,.56+.1*Math.sin(2*Math.PI*2*t)],48)},
+      {ink:0,pts:curve(t=>[.01+.98*t,.8+.06*Math.sin(2*Math.PI*1.5*t+2)],40)},
+      ...[.125,.625].map(x=>({ink:6,pts:[P2(x,.4)]})),
+      ...[[.18,.12],[.24,.08],[.7,.14]].map(([x,y])=>({ink:7,pts:[P2(x-.015,y-.035),P2(x,y),P2(x+.015,y-.035)]})) ]] },
+  { id:'sunset', title:'山和太阳', icon:'⛰', ink:2, meta:'山、太阳、飞鸟 · 1 页',
+    tip:'山的轮廓就是旋律线，太阳是一个小圆圈和弦。<b>试试：</b>把山画得更高更尖。',
+    settings:{...PENT,bpm:84},
+    pages:()=>[[ {ink:2,pts:[[0,.8],[.08,.62],[.15,.74],[.25,.44],[.33,.62],[.4,.55],[.5,.78],[.6,.5],[.7,.66],[.78,.58],[.88,.75],[.999,.6]].map(p=>P2(...p))},
+      {ink:5,pts:curve(t=>[.01+.98*t,.9+.04*Math.sin(2*Math.PI*1.5*t)],36)},
+      {ink:1,pts:ellipse(.72,.25,.05,.12,24)},
+      ...Array.from({length:6},(_,k)=>{ const a=k/6*Math.PI*2; return {ink:1,pts:[P2(.72+.07*Math.cos(a),.25+.17*Math.sin(a)),P2(.72+.09*Math.cos(a),.25+.22*Math.sin(a))]}; }),
+      ...[[.18,.2],[.24,.14],[.3,.22],[.45,.12]].map(([x,y])=>({ink:7,pts:[P2(x-.015,y-.035),P2(x,y),P2(x+.015,y-.035)]})) ]] },
 ];
+const songById=id=>SONGS.find(x=>x.id===id);
 function songPages(song){
-  if(song.pages) return song.pages.map(l=>JSON.parse(JSON.stringify(l)));
+  if(song.pages) return song.pages();
   const parts=song.parts(), n=Math.max(...parts.map(p=>p.pg))+1, pages=Array.from({length:n},()=>[]);
   parts.forEach(p=>pages[p.pg].push(p.s)); return pages;
 }
 function songObject(song){
   const pages=songPages(song);
   return {app:'xingsheng',version:3,
-    settings:{...S, key:0, scale:'major', range:2, octave:0, cents:0, quant:'8', swing:'off', grid:true, mode:1,
-              bpm:song.bpm, beats:song.beats, ink:song.ink, ...(song.settings||{})},
+    settings:{...S, key:0, scale:'major', range:2, octave:0, cents:0, quant:'8', swing:'off', beats:0, bpm:120,
+              grid:false, mode:1, ink:song.ink, ...(song.settings||{})},
     tracks:[{pages:pages.map(l=>({strokes:l,bars:1})),pageIndex:0}], trackIndex:0, timelineOn:pages.length>1};
 }
-let loadedSample=null;    // 刚载入、还没改过的示例曲（用来判断要不要先暂存用户自己的作品）
-const workJSON=()=>JSON.stringify(serialize().tracks);
-function hasWork(){ return tracks.some(t=>t.pages.some(pg=>pg.strokes.length)); }
 function playSong(song){
-  // 当前画纸上是用户自己的东西（不是没动过的示例曲）→ 先暂存，可以一键回来
-  if(hasWork() && !(loadedSample && loadedSample.json===workJSON())){
-    try{ localStorage.setItem('xingsheng.mine',JSON.stringify(serialize())); }catch(e){}
-  }
-  const wasPlaying=playing; if(wasPlaying) pause();
-  load(songObject(song)); loadedSample={id:song.id,json:workJSON()};
+  const msg=stashCurrent();
+  if(playing) pause();
+  load(songObject(song)); setCurrent({sample:song.id});
   closeSamples(); play();
-  toast(`▶ 正在播放《${song.title}》`);
-  void wasPlaying;
+  const gridHint=updateGridPulse()?' · 点左边闪烁的网格按钮，能看到每个音的名字':'';
+  toast(`▶ 正在播放《${song.title}》`+gridHint+(msg?'。'+msg:''), gridHint||msg?4200:1800);
 }
 function renderSongs(){
   const el=$('songList'); el.innerHTML='';
-  SONGS.forEach(song=>{ const b=document.createElement('button'); b.className='song';
-    b.innerHTML=`<span class="pic" style="background:${PALETTES[S.palette][song.ink]}">${song.icon}</span>
-      <span><div class="t">${song.title}</div><div class="m">${song.meta}</div><div class="d">${song.tip}</div></span>`;
-    b.onclick=()=>playSong(song); el.appendChild(b); });
-  let mine=null; try{ mine=localStorage.getItem('xingsheng.mine'); }catch(e){}
-  $('restoreMine').hidden=!mine;
+  SONG_GROUPS.forEach(g=>{
+    const h=document.createElement('div'); h.className='sgroup'; h.innerHTML=`<b>${g.name}</b><span>${g.hint}</span>`; el.appendChild(h);
+    const box=document.createElement('div'); box.className='songs';
+    g.ids.map(songById).forEach(song=>{ const b=document.createElement('button'); b.className='song';
+      b.innerHTML=`<span class="pic" style="background:${PALETTES[S.palette][song.ink]}">${song.icon}</span>
+        <span><div class="t">${song.title}</div><div class="m">${song.meta}</div><div class="d">${song.tip}</div></span>`;
+      b.onclick=()=>playSong(song); box.appendChild(b); });
+    el.appendChild(box);
+  });
 }
 function openSamples(first){
   $('samplesTitle').textContent=first?'欢迎来到「形声」！先听一首？':'示例曲';
@@ -1204,32 +1349,155 @@ function openSamples(first){
 }
 function closeSamples(){ $('samples').classList.remove('show'); try{ localStorage.setItem('xingsheng.welcomed','1'); }catch(e){} }
 $('samplesBtn').onclick=()=>openSamples(false);
-$('samplesClose').onclick=closeSamples; $('samplesSkip').onclick=closeSamples;
+$('samplesClose').onclick=closeSamples;
+$('samplesSkip').onclick=()=>{ closeSamples(); newWork(); };
 $('samples').onclick=e=>{ if(e.target.id==='samples') closeSamples(); };
-$('restoreMine').onclick=()=>{ try{ const m=localStorage.getItem('xingsheng.mine'); if(m){ if(playing) pause(); load(JSON.parse(m)); loadedSample=null;
-  localStorage.removeItem('xingsheng.mine'); closeSamples(); toast('已回到你之前的作品'); } }catch(e){ toast('恢复失败'); } };
+
+// ---------------- 我的作品（保存在浏览器里，可随时切换） ----------------
+// 规则：已保存的作品 → 之后的修改自动保存；没保存的新作品 / 改过的示例曲 → 切换走时自动存成「草稿」，什么都不会丢。
+const LIB_KEY='xingsheng.library', CUR_KEY='xingsheng.current', MAX_DRAFTS=10;
+var currentWork=null;   // {id: 作品库里的 id 或 null, name, sample: 正在看的示例曲 id, saved: 上次保存时的内容}
+function libLoad(){ try{ return JSON.parse(localStorage.getItem(LIB_KEY))||[]; }catch(e){ return []; } }
+function libSave(list){ try{ localStorage.setItem(LIB_KEY,JSON.stringify(list)); return true; }
+  catch(e){ toast('浏览器的存储空间满了：删掉几个作品，或先导出成文件',4000); return false; } }
+const newId=()=>'w'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+function fmtTime(t){ const d=new Date(t),p=n=>String(n).padStart(2,'0'); return `${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`; }
+// 只比较「音乐内容」：线条 + 影响声音的设置（换颜色、换背景不算改动）
+function contentJSON(){ return JSON.stringify({p:tracks.map(t=>t.pages.map(pg=>[pageBars(pg),pg.strokes])),
+  s:[S.key,S.scale,S.range,S.octave,S.cents,S.quant,S.swing,S.beats,S.bpm]}); }
+function hasWork(){ return tracks.some(t=>t.pages.some(pg=>pg.strokes.length)); }
+function setCurrent(o){ currentWork={id:null,name:'',sample:null,...o,saved:contentJSON()}; persistCurrent(); updateWorkLabel(); }
+function persistCurrent(){ try{ localStorage.setItem(CUR_KEY,JSON.stringify(currentWork)); }catch(e){} }
+function isDirty(){ return !!currentWork && hasWork() && contentJSON()!==currentWork.saved; }
+function libAutosave(){
+  if(!currentWork) return;
+  if(currentWork.id && isDirty()){ const list=libLoad(), w=list.find(x=>x.id===currentWork.id);
+    if(w){ w.data=serialize(); w.savedAt=Date.now(); if(libSave(list)){ currentWork.saved=contentJSON(); persistCurrent(); } }
+    else { currentWork.id=null; persistCurrent(); } }
+  updateWorkLabel();
+}
+// 切换到别的作品 / 示例曲 / 新建之前调用：没保存的东西存成草稿，返回给用户看的提示
+function stashCurrent(){
+  if(!currentWork || currentWork.id || !isDirty()) return '';
+  const sample=currentWork.sample&&songById(currentWork.sample);
+  const name=sample?`${sample.title}（改编）${fmtTime(Date.now())}`:`草稿 ${fmtTime(Date.now())}`;
+  let list=libLoad(); list.unshift({id:newId(),name,draft:true,savedAt:Date.now(),data:serialize()});
+  let n=0; list=list.filter(w=>!w.draft||++n<=MAX_DRAFTS);   // 草稿最多留 10 个，太旧的自动删
+  return libSave(list)?`刚才没保存的已存为草稿「${name}」，在「我的作品」里`:'';
+}
+function defaultName(){
+  const sample=currentWork&&currentWork.sample&&songById(currentWork.sample);
+  return sample?`我的《${sample.title}》`:`我的作品 ${libLoad().filter(w=>!w.draft).length+1}`;
+}
+function saveCurrent(name,asNew,quiet){
+  name=(name||'').trim()||defaultName(); const list=libLoad();
+  let w=!asNew&&currentWork.id&&list.find(x=>x.id===currentWork.id);
+  if(w){ w.name=name; w.data=serialize(); w.savedAt=Date.now(); delete w.draft; }
+  else { w={id:newId(),name,savedAt:Date.now(),data:serialize()}; list.unshift(w); }
+  if(!libSave(list)) return false;
+  setCurrent({id:w.id,name:w.name}); if(!quiet) toast(`已保存《${w.name}》，之后的修改会自动保存`,2600);
+  if($('lib').classList.contains('show')) renderLib();
+  return true;
+}
+function quickSave(){ if(currentWork&&currentWork.id&&libLoad().some(w=>w.id===currentWork.id)) saveCurrent(currentWork.name); else openLib(true); }
+function openWork(id){
+  const w=libLoad().find(x=>x.id===id); if(!w) return;
+  const msg=stashCurrent(); if(playing) pause();
+  try{ load(w.data); }catch(e){ toast('打不开：'+e.message); return; }
+  setCurrent({id:w.id,name:w.name}); closeLib();
+  toast(`已打开《${w.name}》`+(msg?'。'+msg:''),msg?4000:1800);
+}
+function newWork(){
+  const msg=stashCurrent(); if(playing) pause();
+  load({settings:{...S},tracks:[{pages:[{strokes:[],bars:1}],pageIndex:0}],trackIndex:0,timelineOn:false});
+  setCurrent({}); closeLib(); toast('新的空白画纸'+(msg?'。'+msg:''),msg?4000:1800);
+}
+function deleteWork(id){
+  const list=libLoad().filter(w=>w.id!==id); libSave(list);
+  if(currentWork.id===id){ currentWork.id=null; currentWork.saved=''; persistCurrent(); updateWorkLabel(); }
+  renderLib();
+}
+function renameWork(id,name){
+  name=(name||'').trim(); if(!name) return renderLib();
+  const list=libLoad(), w=list.find(x=>x.id===id); if(!w) return;
+  w.name=name; delete w.draft; libSave(list);
+  if(currentWork.id===id){ currentWork.name=name; persistCurrent(); updateWorkLabel(); }
+  renderLib();
+}
+function updateWorkLabel(){
+  const el=$('workNow'); if(!el||!currentWork) return;
+  const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const sample=currentWork.sample&&songById(currentWork.sample);
+  let h;
+  if(currentWork.id) h=`正在编辑<br><b>《${esc(currentWork.name)}》</b> · 自动保存`;
+  else if(sample) h=`示例：<b>《${sample.title}》</b>`+(isDirty()?'<br>已改动 · 未保存':'');
+  else h=hasWork()?'<b>新作品</b> · 未保存':'<b>空白画纸</b>';
+  el.innerHTML=h;
+}
+function renderLib(){
+  const list=libLoad(), el=$('workList'); el.innerHTML='';
+  if(currentWork.id && !list.some(w=>w.id===currentWork.id)){ currentWork.id=null; persistCurrent(); }
+  $('libSave').textContent=currentWork.id?`保存（覆盖《${currentWork.name}》）`:'保存当前作品';
+  $('libSaveNew').hidden=!currentWork.id;
+  $('libName').value=currentWork.id?currentWork.name:defaultName();
+  if(!list.length){ el.innerHTML='<div class="empty">还没有保存过作品。<br>画几笔，在上面起个名字，点「保存当前作品」就行。</div>'; return; }
+  list.forEach(w=>{
+    const row=document.createElement('div'); row.className='work'+(w.id===currentWork.id?' cur':'');
+    const cvs=document.createElement('canvas'); cvs.width=192; cvs.height=72;
+    const tr=(w.data&&w.data.tracks)||[]; thumb(cvs,(tr[0]&&tr[0].pages&&tr[0].pages[0]&&tr[0].pages[0].strokes)||[],1);
+    const pages=tr.reduce((n,t)=>n+((t.pages&&t.pages.length)||0),0)||1;
+    const info=document.createElement('div'); info.className='winfo';
+    const nm=document.createElement('div'); nm.className='wname'; nm.textContent=w.name; nm.title='点击改名';
+    nm.onclick=()=>{ const inp=document.createElement('input'); inp.value=w.name; inp.maxLength=40; nm.textContent=''; nm.appendChild(inp); inp.focus(); inp.select();
+      let done=false; const fin=ok=>{ if(done) return; done=true; ok?renameWork(w.id,inp.value):renderLib(); };
+      inp.onkeydown=e=>{ e.stopPropagation(); if(e.key==='Enter') fin(true); if(e.key==='Escape') fin(false); }; inp.onblur=()=>fin(true); };
+    const meta=document.createElement('div'); meta.className='wmeta';
+    meta.innerHTML=(w.draft?'<span class="wtag">草稿</span>':'')+(w.id===currentWork.id?'<span class="wtag">正在编辑</span>':'')+`${fmtTime(w.savedAt)} · ${pages} 页`;
+    info.append(nm,meta);
+    const btns=document.createElement('div'); btns.className='wbtns';
+    const mk=(t,fn,cls)=>{ const x=document.createElement('button'); x.className='pill sm'+(cls?' '+cls:''); x.textContent=t; x.onclick=fn; btns.appendChild(x); return x; };
+    if(w.id!==currentWork.id) mk('打开',()=>openWork(w.id),'hot');
+    mk('导出',()=>{ download(new Blob([JSON.stringify(w.data)],{type:'application/json'}),`形声-${w.name.replace(/[\\/:*?"<>|]/g,'_')}.json`); toast('已导出 .json 文件'); });
+    const del=mk('删除',()=>{ if(del.dataset.armed) return deleteWork(w.id);
+      del.dataset.armed='1'; del.textContent='确定删除？'; del.classList.add('danger');
+      setTimeout(()=>{ if(del.isConnected){ delete del.dataset.armed; del.textContent='删除'; del.classList.remove('danger'); } },3000); });
+    row.append(cvs,info,btns); el.appendChild(row);
+  });
+}
+function openLib(focusName){ renderLib(); $('lib').classList.add('show'); if(focusName){ const i=$('libName'); i.focus(); i.select(); } }
+function closeLib(){ $('lib').classList.remove('show'); }
+function restoreCurrent(){
+  try{ const c=JSON.parse(localStorage.getItem(CUR_KEY)); if(c&&typeof c==='object') currentWork=c; }catch(e){}
+  if(!currentWork) currentWork={id:null,name:'',sample:null,saved:''};
+  // 旧版本留下的「暂存作品」搬进作品库
+  try{ const m=localStorage.getItem('xingsheng.mine'); if(m){ const list=libLoad();
+    list.unshift({id:newId(),name:'之前的作品（自动备份）',draft:true,savedAt:Date.now(),data:JSON.parse(m)});
+    if(libSave(list)) localStorage.removeItem('xingsheng.mine'); } }catch(e){}
+}
+$('libBtn').onclick=()=>openLib(false);
+$('save').onclick=quickSave;
+$('libClose').onclick=closeLib;
+$('lib').onclick=e=>{ if(e.target.id==='lib') closeLib(); };
+$('libSave').onclick=()=>{ if(saveCurrent($('libName').value,false)) closeLib(); };
+$('libSaveNew').onclick=()=>{ if(saveCurrent($('libName').value===currentWork.name?$('libName').value+' 副本':$('libName').value,true)) closeLib(); };
+$('libName').onkeydown=e=>{ e.stopPropagation(); if(e.key==='Enter') $('libSave').click(); };
+$('libNew').onclick=newWork;
+$('libImport').onclick=()=>$('openFile').click();
 
 // ---------------- 启动 ----------------
 (function init(){
   buildPiano(); readColors(); renderPlay();
   let ok=false;
   try{ const s=localStorage.getItem('xingsheng.v3')||localStorage.getItem('xingsheng.v2'); if(s){ load(JSON.parse(s)); ok=true; } }catch(e){}
-  if(!ok){
-    // 示例作品：第一次打开就能听到声音
-    setStrokes([
-      {ink:0,pts:[[.03,.80],[.12,.62],[.20,.48],[.27,.56],[.34,.36],[.42,.44],[.48,.28]]},
-      {ink:7,pts:[[.02,.96],[.24,.96]]},{ink:7,pts:[[.26,.90],[.48,.90]]},
-      {ink:6,pts:[[.55,.22]]},{ink:6,pts:[[.68,.30]]},{ink:6,pts:[[.82,.18]]},
-      {ink:3,pts:[[.53,.70],[.60,.55],[.67,.66],[.75,.48],[.83,.60],[.97,.40]]},
-      {ink:5,pts:[[.52,.84],[.98,.84]]},
-    ]);
-    renderInst(); renderSwatches(); changed();
+  restoreCurrent();                       // 恢复「正在编辑哪个作品」，并把旧版的备份搬进作品库
+  if(!ok){                                // 第一次来：画纸上直接摆好《小星星》（不显示网格）
+    load(songObject(SONGS.find(x=>x.id==='twinkle'))); setCurrent({sample:'twinkle'});
   }
   renderInst(); renderSwatches(); renderUndo(); $('tGrid').classList.toggle('on',S.grid);
   $('hint').style.opacity=strokes.length?0:1;
-  resize(); draw(); frame();
+  resize(); draw(); frame(); updateGridPulse(); updateWorkLabel();
   let welcomed=false; try{ welcomed=!!localStorage.getItem('xingsheng.welcomed'); }catch(e){}
-  if(!welcomed) openSamples(true);   // 第一次打开：直接弹出示例曲，点一首就能听
+  if(!welcomed) openSamples(true);        // 第一次打开：弹出示例曲，点一首就能听
 })();
 </script>
 </body>
