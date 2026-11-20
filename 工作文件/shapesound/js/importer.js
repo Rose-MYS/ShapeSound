@@ -356,7 +356,8 @@ function applyImport(song,fallbackName){
 async function importFile(f){
   const ext=(f.name.split('.').pop()||'').toLowerCase(), base=f.name.replace(/\.[^.]+$/,'');
   try{
-    if(/^(png|jpe?g|gif|webp|bmp|heic|pdf)$/.test(ext)) throw new Error('照片和 PDF 不能直接识别：请先用 MuseScore 或 Audiveris 把它转成 MusicXML，再导入');
+    if(/^(png|jpe?g|gif|webp|bmp|avif|svg)$/.test(ext)||(f.type||'').startsWith('image/')){ loadPhoto(f); return; }   // 照片：描线（在 photo.js）
+    if(ext==='pdf') throw new Error('PDF 不能直接导入：五线谱请先用 MuseScore 或 Audiveris 转成 MusicXML；想描线的话，把那一页截图成图片再选');
     let song;
     if(ext==='mid'||ext==='midi') song=parseMidi(await f.arrayBuffer());
     else if(ext==='mxl') song=parseMusicXML(await unzipMxl(await f.arrayBuffer()));
