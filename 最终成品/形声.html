@@ -493,10 +493,28 @@ function drumHit(ac,out,k,t,vel){
            {noise:{amp:.6,hp:4500},peak:.42,tau:.55,len:2.2}][k];                  // 吊镲
   hit(ac,out,t,{...P,peak:P.peak*vel*.75});
 }
-// 电吉他的失真曲线（tanh 软削波），每个音频环境只算一次
-const distCache=new WeakMap();
-function distCurve(ac){ let c=distCache.get(ac); if(!c){ const n=2048, k=14; c=new Float32Array(n);
-  for(let i=0;i<n;i++){ const x=i/(n-1)*2-1; c[i]=Math.tanh(k*x)/Math.tanh(k); } distCache.set(ac,c); } return c; }
+// 电吉他：Karplus-Strong 拨弦（一根被拨响、慢慢衰减的琴弦）→ 失真 → 音箱模拟
+// 失真曲线：带一点不对称的 tanh 软削波，按参数缓存
+const distCache=new Map();
+function distCurve(k,asym){ const key=k+'_'+asym; let c=distCache.get(key); if(!c){ const n=4096; c=new Float32Array(n);
+  for(let i=0;i<n;i++){ const x=i/(n-1)*2-1, y=x+asym*x*x; c[i]=Math.tanh(k*y)/Math.tanh(k*(1+asym)); } distCache.set(key,c); } return c; }
+// 琴弦：用整数长度 N 的延迟线生成，平均滤波器还会多出半个采样，所以实际周期是 N+0.5；
+// 再用 playbackRate 精确校音。同一个音、同样长度只算一次。
+const ksCache=new Map();
+function ksBuffer(ac,f,secs){
+  const sr=ac.sampleRate, N=Math.max(8,Math.round(sr/f-.5)), key=sr+'|'+N+'|'+secs.toFixed(1), rate=f*(N+.5)/sr;
+  if(ksCache.has(key)) return {buf:ksCache.get(key),rate};
+  const len=Math.floor(sr*secs), buf=ac.createBuffer(1,len,sr), d=buf.getChannelData(0), line=new Float32Array(N);
+  let lp=0; for(let i=0;i<N;i++){ lp+=(Math.random()*2-1-lp)*.7; line[i]=lp; }            // 拨片：低通过的噪声
+  const P=Math.max(1,Math.round(N*.11)), ex=line.slice(); for(let i=0;i<N;i++) line[i]=ex[i]-ex[(i+P)%N]*.9; // 拨弦位置
+  let m=0; for(let i=0;i<N;i++) m+=line[i]; m/=N; let pk=0; for(let i=0;i<N;i++){ line[i]-=m; pk=Math.max(pk,Math.abs(line[i])); }
+  for(let i=0;i<N;i++) line[i]/=pk||1;
+  const g=Math.pow(10,-3/(6*f)); // 约 6 秒衰减 60dB，高低音一样长
+  let idx=0, prev=line[N-1];
+  for(let i=0;i<len;i++){ const cur=line[idx]; d[i]=cur; line[idx]=(cur+prev)*.5*g; prev=cur; idx=(idx+1)%N; }
+  if(ksCache.size>400) ksCache.clear();
+  ksCache.set(key,buf); return {buf,rate};
+}
 function voice(ac, out, ink, f, t, dur, vel=.8){
   if(ink===DRUM_INK){ drumHit(ac,out,drumKind(f),t,vel); return {release(){}}; }
   const g=ac.createGain(); g.gain.value=0; g.connect(out);
@@ -573,15 +591,13 @@ function voice(ac, out, ink, f, t, dur, vel=.8){
       const lp=ac.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=Math.min(f*3,5000);
       const fa=amp(1.6), la=amp(.25); mix.connect(bp1); mix.connect(bp2); mix.connect(lp); bp1.connect(fa); bp2.connect(fa); lp.connect(la); fa.connect(g); la.connect(g);
       const pk=.12*vel; G.setValueAtTime(0,t); G.linearRampToValueAtTime(pk,t+.25); G.setValueAtTime(pk,t+D); G.setTargetAtTime(0,t+D,.3); end=t+D+1.6; break; }
-    case 15:{ // 电吉他：锯齿波 + 方波 → 过载失真 → 音箱般的高低切，带一点揉弦
-      const o1=osc('sawtooth',f), o2=osc('square',f*1.005), pre=amp(1.4); o1.connect(pre); o2.connect(pre);
-      const ws=ac.createWaveShaper(); ws.curve=distCurve(ac); ws.oversample='2x';
-      const hp=ac.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=90;
-      const lp=ac.createBiquadFilter(); lp.type='lowpass'; lp.Q.value=.9;
-      lp.frequency.setValueAtTime(Math.min(f*8,4800),t); lp.frequency.setTargetAtTime(Math.min(f*4,2800),t,.3);
-      pre.connect(ws); ws.connect(hp); hp.connect(lp); lp.connect(g); vibrato(o1.frequency,5.5,f*.006,.45);
-      const pk=.1*vel; G.setValueAtTime(0,t); G.linearRampToValueAtTime(pk,t+.004); G.setTargetAtTime(pk*.65,t+.004,.25);
-      G.setValueAtTime(pk*.65,t+D); G.setTargetAtTime(0,t+D,.08); end=t+D+.5; break; }
+    case 15:{ // 电吉他（重失真 Lead）：拨弦 → 切低频推中频 → 失真 → 音箱（低频饱满、中频略挖、4kHz 以上陡切）
+      const secs=Math.min(D+.45,6), {buf,rate}=ksBuffer(ac,f,secs), src=ac.createBufferSource(); src.buffer=buf; src.playbackRate.value=rate; nodes.push(src);
+      const bq=(type,fr,Q=.707,gain=0)=>{ const b=ac.createBiquadFilter(); b.type=type; b.frequency.value=fr; b.Q.value=Q; b.gain.value=gain; return b; };
+      const drv=amp(22), ws=ac.createWaveShaper(); ws.curve=distCurve(3,.1); ws.oversample='4x';
+      const chainG=[bq('highpass',220),bq('peaking',800,.8,7),drv,ws,bq('highpass',90),bq('peaking',120,1,3),bq('peaking',500,1.2,-3),bq('peaking',2000,1,3),bq('lowpass',4200,.9),bq('lowpass',5040,.6),g];
+      src.connect(chainG[0]); for(let i=0;i<chainG.length-1;i++) chainG[i].connect(chainG[i+1]);
+      const pk=.075*vel; G.setValueAtTime(pk,t); G.setValueAtTime(pk,t+D); G.setTargetAtTime(0,t+D,.06); end=t+secs; break; }
     default:{ // 8-bit：方波，几乎没有包络
       const o=osc('square',f); o.connect(g);
       const pk=.09*vel; G.setValueAtTime(pk,t); G.setValueAtTime(pk*.8,t+.05); G.setValueAtTime(0,t+D*.92); end=t+D+.05; }
