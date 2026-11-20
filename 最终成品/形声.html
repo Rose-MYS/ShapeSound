@@ -458,8 +458,11 @@ function buildChain(ac, dest){
   const comp=ac.createDynamicsCompressor(); comp.threshold.value=-14; comp.ratio.value=4; comp.attack.value=.005; comp.release.value=.2;
   const verb=ac.createConvolver(); verb.buffer=makeImpulse(ac);
   const wet=ac.createGain(); wet.gain.value=.22;
-  input.connect(comp); input.connect(verb); verb.connect(wet); wet.connect(comp); comp.connect(dest);
-  return {input, comp};
+  // 最后再加一道限幅器：十几个声部一起响时也不会破音
+  const lim=ac.createDynamicsCompressor(); lim.threshold.value=-4; lim.knee.value=0; lim.ratio.value=20; lim.attack.value=.002; lim.release.value=.12;
+  const out=ac.createGain(); out.gain.value=.92;
+  input.connect(comp); input.connect(verb); verb.connect(wet); wet.connect(comp); comp.connect(lim); lim.connect(out); out.connect(dest);
+  return {input, comp:out};
 }
 function ensureAudio(){
   if(!ctx){
@@ -1235,15 +1238,15 @@ function rng(seed){ return ()=>{ seed=seed+0x6D2B79F5|0; let t=Math.imul(seed^se
 const PENT={scale:'majPent',range:3,quant:'16'};   // 画画类：大调五声（怎么画都好听）、3 个八度（16 行）
 // 鼓组：在 top 行高的画纸上，每件鼓该画在哪一行（和 drumKindAt 的分段对应）
 const DR=top=>({K:Math.round(.08*top),T:Math.round(.28*top),S:Math.round(.45*top),H:Math.round(.65*top),O:Math.round(.82*top),C:Math.round(.96*top)});
-// 一小节里在第几拍敲一下（拍可以是 0.5），变成记谱
-function hitsAt(row,pos,len=4){ const out=[]; let cur=0;
-  [...pos].sort((a,b)=>a-b).forEach(p=>{ if(p>cur) out.push([null,p-cur]); out.push([row,.5]); cur=p+.5; });
+// 一小节里在第几拍敲一下（拍可以是 0.5、0.25），变成记谱；dur = 每一下占多长
+function hitsAt(row,pos,len=4,dur=.5){ const out=[]; let cur=0;
+  [...pos].sort((a,b)=>a-b).forEach(p=>{ if(p>cur) out.push([null,p-cur]); out.push([row,dur]); cur=p+dur; });
   if(cur<len) out.push([null,len-cur]); return out; }
 const bars=(fn,n)=>Array.from({length:n},(_,i)=>fn(i)).flat();
 
 const SONG_GROUPS=[
   {name:'简单儿歌', hint:'一听就会，第一次玩从这里开始', ids:['twinkle','tigers','birthday','jingle']},
-  {name:'复杂编曲 · 挑战', hint:'好几种乐器分声部，一页一页叠上去', ids:['canon','ode','minuet','elise','night','harbor']},
+  {name:'复杂编曲 · 挑战', hint:'好几种乐器分声部，一页一页叠上去', ids:['epic','canon','ode','minuet','elise','night','harbor']},
   {name:'搞怪 · 好玩', hint:'不按常理出牌，居然也挺好听', ids:['rain','cat','chip','coaster']},
   {name:'像画一样的谱子', hint:'先是一幅画，按下播放才发现是音乐', ids:['smile','heart','waves','sunset']},
 ];
@@ -1277,6 +1280,80 @@ const SONGS=[
       const bass=[...C,...C,...C,...C,...F,...C,...D,...G, ...C,...C,...C,...C,...F,...C,...G,[0,4]];
       return [...songStrokes(mel,2), ...songStrokes(bass,7)]; } },
 
+  { id:'epic', title:'星海远征（原创 · 交响电子）', icon:'🚀', ink:9, meta:'原创 · 15 种乐器全部上场 · 8 页 · 约 1 分钟',
+    tip:'前奏 → 铺垫 → 主题 → 变奏 → 间奏 → 推进 → 高潮 → 尾声，一页一段；高潮那页同时有十几个声部。<b>试试：</b>打开网格和 Pages，一页一页看乐器怎么叠上去。',
+    settings:{key:9,scale:'minor',range:3,quant:'16',bpm:132},
+    // A 自然小调、3 个八度：行 0 = A3，7 = A4，14 = A5，21 = A6。量化 1/16（一拍 4 步），一页 4 小节（16 拍）
+    parts:()=>{
+      const T=21, D=DR(T), S_=(notes,ink,pg)=>songStrokes(notes,ink,{spb:4,top:T,offset:pg*16});
+      const PROG=[...'AFCG'];                                                    // Am F C G
+      const CH={A:[7,9,11],F:[5,7,9],C:[9,11,13],G:[6,8,10]}, BASS={A:7,F:5,C:2,G:6};
+      const perBar=(fn,prog=PROG)=>prog.flatMap(fn);
+      const pad=(k,sh=0,prog=PROG)=>perBar(c=>[[CH[c][k]+sh,4]],prog);
+      const ostin=perBar(c=>{ const [a,,e]=CH[c]; return rep([[a,.25],[e,.25],[a+7,.25],[e,.25]],4); });
+      const harp=perBar(c=>{ const [a,b,e]=CH[c]; return [a,b,e,a+7,b+7,e+7,a+7,e].map(r=>[r,.5]); });
+      const marim=perBar(c=>{ const [a,b,e]=CH[c]; return rep([[e+7,.25],[a+7,.25],[b+7,.25],[a+7,.25]],4); });
+      const chip=perBar(c=>{ const [a,b,e]=CH[c]; return rep([[a+7,.25],[b+7,.25],[e+7,.25],[b+7,.25]],4); });
+      const bass8=perBar(c=>{ const r=BASS[c]; return [...rep([[r,.5]],6),[r+7,.5],[r+7,.5]]; });
+      const bassHalf=perBar(c=>[[BASS[c],2],[BASS[c],2]]);
+      const stab=k=>perBar(c=>{ const r=CH[c][k]; return [[r,1],[null,.5],[r,1],[null,.5],[r,1]]; });
+      const bells=perBar(c=>[[CH[c][2]+7,4]]);
+      // 主题（原创）：A 段、A' 段、长笛对位
+      const theme=[[11,1.5],[10,.5],[9,1],[11,1], [12,1.5],[11,.5],[10,1],[9,1], [9,1],[11,1],[14,1.5],[13,.5], [13,2],[11,1],[8,1]];
+      const themeB=[[14,1.5],[13,.5],[11,1],[14,1], [16,1.5],[14,.5],[12,1],[10,1], [9,.5],[11,.5],[14,.5],[16,.5],[18,1],[16,1], [17,2],[15,1],[13,.5],[11,.5]];
+      const counter=[[16,2],[14,2], [17,2],[16,2], [16,2],[18,2], [17,4]];
+      const up=(n,k)=>n.map(([r,d])=>[r===null?null:r+k,d]);
+      // 鼓：每小节的位置可以是固定的，也可以按小节号给
+      const dr=(row,pos,dur=.5)=>bars(i=>hitsAt(row,typeof pos==='function'?pos(i):pos,4,dur),4);
+      const X16=Array.from({length:16},(_,i)=>i/4), X8=Array.from({length:8},(_,i)=>i/2);
+      const crash=bars(()=>hitsAt(D.C,[0]),4);
+      // 风铃：A 小调五声里的高音，随机落点
+      const sparkle=(seed,n)=>{ const r=rng(seed), hi=[14,16,17,18,20], pos=new Set();
+        while(pos.size<n) pos.add(Math.floor(r()*64)/4);
+        return [...pos].sort((a,b)=>a-b).flatMap((p,i,arr)=>{ const prev=i?arr[i-1]+.25:0; return [...(p>prev?[[null,p-prev]]:[]),[hi[Math.floor(r()*hi.length)],.25]]; }); };
+      // 竖琴刮奏 / 8-bit 爬升：一步一个点，斜着往上走
+      const run=(from,to,beats,start=0)=>{ const n=beats*4; return [[null,start],...Array.from({length:n},(_,i)=>[Math.round(from+(to-from)*i/(n-1)),.25])].filter(x=>x[0]!==null||x[1]>0); };
+      const out=[];
+      const put=(pg,...list)=>list.forEach(([notes,ink])=>out.push(...S_(notes,ink,pg)));
+
+      // 第 1 页 · 前奏：钟声动机、合唱铺底、管风琴持续低音、风铃、通鼓渐强
+      put(0,[[[11,2],[10,2],[9,2],[7,2],[11,2],[12,2],[13,2],[11,2]],2],
+            [pad(0),13],[pad(2),13],[[[0,16]],10],[sparkle(11,10),6],
+            [dr(D.T,i=>[[0],[0,2],[0,1,2,3],[0,.5,1,1.5,2,2.5,3,3.25,3.5,3.75]][i],.25),DRUM_INK]);
+      // 第 2 页 · 铺垫：拨弦十六分音符、弦乐和声、竖琴分解和弦、贝斯进来
+      put(1,[ostin,1],[pad(0),5],[pad(1),5],[pad(2),5],[harp,11],[bassHalf,7],
+            [dr(D.K,[0,2]),DRUM_INK],[dr(D.H,X8),DRUM_INK],[dr(D.S,i=>i===3?[3,3.25,3.5,3.75]:[],.25),DRUM_INK]);
+      // 第 3 页 · 主题：铜管主旋律、长笛对位、电钢琴切分和弦、8-bit 琶音、整套鼓
+      put(2,[theme,9],[counter,4],[stab(0),12],[stab(1),12],[stab(2),12],[bass8,7],[ostin,1],[chip,8],[bells,2],
+            [crash,DRUM_INK],[dr(D.K,[0,.75,2,2.75]),DRUM_INK],[dr(D.S,[1,3]),DRUM_INK],[dr(D.H,X16,.25),DRUM_INK]);
+      // 第 4 页 · 变奏：弦乐接旋律（更高），铜管在下面配三度，管风琴、马林巴、竖琴、合唱一起
+      put(3,[themeB,5],[up(themeB,-2),9],[pad(0),10],[pad(1),10],[pad(2),10],[marim,3],[harp,11],[bass8,7],[pad(1),13],[pad(2),13],
+            [crash,DRUM_INK],[dr(D.K,[0,.75,2,2.75]),DRUM_INK],[dr(D.S,[1,3]),DRUM_INK],[dr(D.H,X16,.25),DRUM_INK],[dr(D.O,[.5,1.5,2.5,3.5]),DRUM_INK]);
+      // 第 5 页 · 间奏：钢琴独奏分解和弦，合唱和风铃，只留轻轻的镲
+      put(4,[perBar(c=>{ const [a,b,e]=CH[c]; return [a,e,a+7,b+7,e+7,b+7,a+7,e].map(r=>[r,.5]); }),0],
+            [perBar(c=>{ const r=CH[c][0]>=7?CH[c][0]-7:CH[c][0]; return [[r,2],[r+4,2]]; }),0],
+            [pad(0),13],[pad(2),13],[sparkle(29,8),6],[dr(D.H,X8),DRUM_INK],[dr(D.K,[0]),DRUM_INK]);
+      // 第 6 页 · 推进：军鼓从四分 → 八分 → 十六分越来越密，8-bit 一路爬升，合唱一级级往上
+      put(5,[run(0,21,16),8],[pad(0),5],[pad(1),5],[pad(2),5],[rep([[7,.5]],32),7],[[[0,16]],10],
+            [[[9,4],[11,4],[13,4],[14,4]],13],
+            [dr(D.K,[0,1,2,3]),DRUM_INK],[dr(D.S,i=>[[0,1,2,3],X8,X16,X16][i],.25),DRUM_INK],[dr(D.T,i=>i===3?X16:[],.25),DRUM_INK]);
+      // 第 7 页 · 高潮：铜管、弦乐、长笛三个八度齐奏主题，合唱三度和声，所有伴奏全开，竖琴最后一小节刮奏
+      put(6,[theme,9],[up(theme,7),5],[up(theme,7),4],[up(theme,2),13],
+            [pad(0),10],[pad(1),10],[pad(2),10],[stab(0),12],[stab(1),12],[stab(2),12],
+            [ostin,1],[marim,3],[chip,8],[bass8,7],[bells,2],
+            [[...harp.slice(0,24),...run(0,21,4)],11],
+            [crash,DRUM_INK],[dr(D.K,[0,.75,1.5,2,2.75,3.5]),DRUM_INK],[dr(D.S,[1,3]),DRUM_INK],[dr(D.H,X16,.25),DRUM_INK],
+            [dr(D.T,i=>i===3?[3,3.25,3.5,3.75]:[],.25),DRUM_INK]);
+      // 第 8 页 · 尾声：F → G → 结束在一个很大的 A 小调和弦上，最后一小节只剩余音
+      put(7,[[[12,3],[11,1],[10,2],[8,2],[7,7]],9],
+            [[[5,4],[6,4],[7,7]],5],[[[9,4],[10,4],[11,7]],5],[[[14,8],[14,7]],4],
+            [[[5,4],[6,4],[0,7]],10],[[[9,4],[10,4],[7,7]],10],[[[null,8],[14,7]],10],
+            [[[null,8],[9,7]],13],[[[null,8],[11,7]],13],
+            [[[5,4],[6,4],[0,7]],7],
+            [run(0,14,2,6),11],[[[null,8],...[0,2,4,7,9,11,14].map(r=>[r,.5])],0],
+            [[[null,8],[14,4]],2],[[[null,8],[null,1],[18,.25],[null,.75],[16,.25],[null,.75],[20,.25]],6],
+            [[[D.K,.5],[null,3.5],...rep([[D.T,.25]],16),[D.C,.5],[null,7.5]],DRUM_INK],[[[null,8],[D.K,.5]],DRUM_INK]);
+      return out; } },
   // ---------- 复杂编曲 · 挑战（多乐器、多声部；3 个八度：行 0 = 主音低八度，7 = 中音区主音，14 = 高八度，21 = 最高） ----------
   { id:'canon', title:'卡农（大编制）', icon:'🎻', ink:5, meta:'帕赫贝尔 · 贝斯 竖琴 弦乐 长笛 电钢琴 合唱 · 4 页',
     tip:'贝斯和竖琴一直在底下转，旋律一页一个声部地叠上来，最后一页六种乐器一起响。<b>试试：</b>打开 Pages，点每一页看看谁是新进来的。',

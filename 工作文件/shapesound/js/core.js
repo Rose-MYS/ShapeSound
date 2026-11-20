@@ -118,8 +118,11 @@ function buildChain(ac, dest){
   const comp=ac.createDynamicsCompressor(); comp.threshold.value=-14; comp.ratio.value=4; comp.attack.value=.005; comp.release.value=.2;
   const verb=ac.createConvolver(); verb.buffer=makeImpulse(ac);
   const wet=ac.createGain(); wet.gain.value=.22;
-  input.connect(comp); input.connect(verb); verb.connect(wet); wet.connect(comp); comp.connect(dest);
-  return {input, comp};
+  // 最后再加一道限幅器：十几个声部一起响时也不会破音
+  const lim=ac.createDynamicsCompressor(); lim.threshold.value=-4; lim.knee.value=0; lim.ratio.value=20; lim.attack.value=.002; lim.release.value=.12;
+  const out=ac.createGain(); out.gain.value=.92;
+  input.connect(comp); input.connect(verb); verb.connect(wet); wet.connect(comp); comp.connect(lim); lim.connect(out); out.connect(dest);
+  return {input, comp:out};
 }
 function ensureAudio(){
   if(!ctx){
