@@ -2,7 +2,7 @@
 
 一件"画线即作曲"的网页可视化乐器：在纸上画线，播放头从左往右扫过，碰到线条就发声——线越高音越高，颜色就是乐器。
 
-> 课程项目 · 2026。玩法与界面布局参考了 [playmusictheory.net/play](https://playmusictheory.net/play)（作者 Tala Rae Schlossberg）；本项目的代码、文字、配色与图标均为独立编写。
+> 玩法与界面布局参考了 [playmusictheory.net/play](https://playmusictheory.net/play)（作者 Tala Rae Schlossberg）；本项目的代码、文字、配色与图标均为独立编写。
 
 ## 马上试试
 
