@@ -4,7 +4,7 @@
 function renderSwatches(){
   const el=$('swatches'); el.innerHTML='';
   PALETTES[S.palette].forEach((c,i)=>{ const b=document.createElement('button'); b.className='sw'+(tool==='draw'&&S.ink===i?' on':'');
-    b.style.background=c; b.dataset.tip=`${INSTR[i]}（快捷键 ${i+1}）`; b.onclick=()=>setInk(i); el.appendChild(b); });
+    b.style.background=c; b.dataset.tip=INSTR[i]+(i<9?`（快捷键 ${i+1}）`:'')+(i===DRUM_INK?'：越低越是底鼓，越高越是镲':''); b.onclick=()=>setInk(i); el.appendChild(b); });
   $('timbre').textContent=tool==='erase'?'橡皮：擦掉碰到的线':'音色：'+INSTR[S.ink];
   $('tPen').classList.toggle('on',tool==='draw'); $('tErase').classList.toggle('on',tool==='erase');
 }
@@ -17,7 +17,7 @@ function updateGridPulse(){ let tried=false; try{ tried=!!localStorage.getItem('
 $('tPen').onclick=()=>setTool('draw'); $('tErase').onclick=()=>setTool(tool==='erase'?'draw':'erase');
 $('tUndo').onclick=undo; $('tRedo').onclick=redo;
 $('tClear').onclick=()=>{ if(!strokes.length) return; snapshot(); setStrokes([]); changed(); toast('已清空，可撤销'); };
-$('tShuffle').onclick=()=>{ if(!strokes.length) return toast('先画几笔再换'); snapshot(); strokes.forEach(s=>s.ink=Math.floor(Math.random()*9)); changed(); toast('每条线都换了一种乐器'); };
+$('tShuffle').onclick=()=>{ if(!strokes.length) return toast('先画几笔再换'); snapshot(); strokes.forEach(s=>s.ink=Math.floor(Math.random()*(NINK-1)));   /* 不随机成鼓组 */ changed(); toast('每条线都换了一种乐器'); };
 $('tPalette').onclick=()=>{ S.palette=(S.palette+1)%PALETTES.length; renderSwatches(); castMask=-1; if(S.mode===3) buildCast(); renderStrip(); autosave(); toast(['明亮','国色','霓虹'][S.palette]+'配色'); };
 $('tGrid').onclick=toggleGrid;
 $('tBg').onclick=()=>{ const next=PAPERS[(PAPERS.indexOf(S.paper)+1)%PAPERS.length]; if(next==='photo'){ $('photoFile').click(); return; } setPaper(next); toast('背景：'+PAPER_NAMES[next]); };
@@ -45,7 +45,7 @@ function load(obj){
   Object.assign(S,obj.settings||{});
   if(obj.settings && obj.settings.tune && !('cents' in obj.settings)) S.cents=clamp(Math.round(1200*Math.log2(obj.settings.tune/440)),-50,50);
   if(!SCALES[S.scale]) S.scale='majPent'; if(!QUANT[S.quant]) S.quant='8t'; if(!SWING[S.swing]) S.swing='off';
-  S.ink=clamp(S.ink|0,0,8); S.beats=(S.beats|0)&7; S.palette=clamp(S.palette|0,0,PALETTES.length-1); S.mode=[1,2,3].includes(S.mode)?S.mode:1;
+  S.ink=clamp(S.ink|0,0,NINK-1); S.beats=(S.beats|0)&7; S.palette=clamp(S.palette|0,0,PALETTES.length-1); S.mode=[1,2,3].includes(S.mode)?S.mode:1;
   delete S.slot; delete S.slots; delete S.bars;
   tracks=tr.map(t=>({pages:(t.pages&&t.pages.length?t.pages:[{strokes:[]}]).map(pg=>({strokes:Array.isArray(pg.strokes)?pg.strokes:[],bars:pageBars(pg)})),
     pageIndex:t.pageIndex|0,played:0,collapsed:!!t.collapsed}));
@@ -108,20 +108,25 @@ function exportMidi(){
   computeEvents();
   const PPQ=480, N=stepsPerLoop(), tps=PPQ/stepsPerBeat(), R=rows();
   const swingT=i=>QUANT[S.quant].trip||i%2===0?0:Math.round(SWING[S.swing].v*tps);
-  const PROG=[0,25,14,12,73,48,9,33,80];   // GM 音色：钢琴 钢弦吉他 管钟 马林巴 长笛 弦乐 钟琴 贝斯 方波
+  // GM 音色：钢琴 钢弦吉他 管钟 马林巴 长笛 弦乐 钟琴 贝斯 方波 | 铜管 管风琴 竖琴 电钢琴 合唱
+  const PROG=[0,25,14,12,73,48,9,33,80,61,19,46,4,52];
+  // 通道：乐器 0–8 → 0–8；新乐器 → 10、12–15；第 10 通道（编号 9）留给打击乐（鼓组 + 鼓伴奏）；伴奏贝斯共用 7，琶音用 11
+  const chOf=ink=>ink===DRUM_INK?9:ink<=8?ink:[10,12,13,14,15][ink-9];
+  const GM_DRUM=[36,45,38,42,46,49];   // 底鼓 通鼓 军鼓 闭镲 开镲 吊镲
   const used=new Set(), ev=[];
   for(let i=0;i<N;i++) for(const e of events[i]){
-    used.add(e.ink); const ch=e.ink>=9?e.ink+1:e.ink;   // 跳过第 10 通道（打击乐）
-    const on=Math.round(i*tps)+swingT(i), off=Math.round((i+e.len)*tps)-1, m=clamp(R[e.row]-(e.ink===7?12:0),0,127);
+    used.add(e.ink); const ch=chOf(e.ink), on=Math.round(i*tps)+swingT(i);
+    if(e.ink===DRUM_INK){ const m=GM_DRUM[drumKindAt(e.row/Math.max(1,R.length-1))]; ev.push({t:on,o:2,d:[0x99,m,100]},{t:on+30,o:1,d:[0x89,m,0]}); continue; }
+    const off=Math.round((i+e.len)*tps)-1, m=clamp(R[e.row]-(e.ink===7?12:0),0,127);
     ev.push({t:on,o:2,d:[0x90|ch,m,96]},{t:Math.max(off,on+1),o:1,d:[0x80|ch,m,0]});
   }
-  for(const c of used) ev.push({t:0,o:0,d:[0xC0|c,PROG[c]]});
-  // 伴奏：贝斯 = 通道 11，琶音 = 通道 12，鼓 = 通道 10（GM 打击乐：36 底鼓、38 军鼓、42 闭镲）
+  for(const c of used) if(c!==DRUM_INK) ev.push({t:0,o:0,d:[0xC0|chOf(c),PROG[c]]});
+  // 伴奏：贝斯与贝斯颜色共用通道（编号 7），琶音用编号 11，鼓用打击乐通道（编号 9；GM 打击乐：36 底鼓、38 军鼓、42 闭镲）
   const note=(ch,m,on,len,v=90)=>ev.push({t:on,o:2,d:[0x90|ch,m,v]},{t:on+Math.max(1,len),o:1,d:[0x80|ch,m,0]});
-  if(S.beats&1) ev.push({t:0,o:0,d:[0xC0|10,38]});   // Synth Bass 1
+  if(S.beats&1 && !used.has(7)) ev.push({t:0,o:0,d:[0xC0|7,38]});   // Synth Bass 1
   if(S.beats&4) ev.push({t:0,o:0,d:[0xC0|11,11]});   // Vibraphone
   for(let i=0;i<N;i++){ const b=beatHits(i), on=Math.round(i*tps)+swingT(i);
-    if(b.bass) note(10,48+beatKey(),on,Math.round(tps*stepsPerBeat()*.5));
+    if(b.bass) note(7,48+beatKey(),on,Math.round(tps*stepsPerBeat()*.5));
     if(b.kick) note(9,36,on,60,100); if(b.snare) note(9,38,on,60,90); if(b.hat) note(9,42,on,30,64);
     if(b.arp!==null) note(11,b.arp+beatKey(),on,Math.round(tps*.9),80);
   }

@@ -269,11 +269,11 @@ function drawPixels(g){
   if(tool==='erase' && pointer.inside){ g.strokeStyle=C.muted; g.setLineDash([3,3]); g.lineWidth=1; g.beginPath(); g.arc(pointer.x,pointer.y,ERASE_R,0,Math.PI*2); g.stroke(); g.setLineDash([]); }
 }
 
-// 舞台模式：九宫格，一格一种颜色（乐器）。暂停时全部显示；播放时某种乐器在响，它的格子才亮起 / 露出照片
-const castPhotos=new Array(9).fill(null); let castTarget=-1;
+// 舞台模式：一格一种颜色（乐器）。暂停时全部显示；播放时某种乐器在响，它的格子才亮起 / 露出照片
+const castPhotos=new Array(NINK).fill(null); let castTarget=-1;
 function buildCast(){
   const el=$('cast'); el.innerHTML=''; castMask=-1;
-  for(let i=0;i<9;i++){
+  for(let i=0;i<NINK;i++){
     const c=document.createElement('div'); c.className='cell'+(castPhotos[i]?'':' nophoto'); c.style.background=inkColor(i);
     if(castPhotos[i]){ const img=document.createElement('img'); img.src=castPhotos[i]; img.alt=''; c.appendChild(img); }
     c.insertAdjacentHTML('beforeend',`<div class="glow"></div><span class="lbl">${INSTR[i]}</span>`);
@@ -286,7 +286,7 @@ $('castFile').onchange=e=>{ const f=e.target.files[0]; if(!f||castTarget<0) retu
   castPhotos[castTarget]=URL.createObjectURL(f); buildCast(); };
 let castMask=-1;
 function updateCast(){
-  let m=0x1ff;
+  let m=(1<<NINK)-1;
   if(playing){ m=0; if(stepQueue.length && stepQueue[0].time<=(ctx?ctx.currentTime:0)) m=soundMask[stepQueue[0].step]||0; }
   if(m===castMask) return; castMask=m;
   [...$('cast').children].forEach((c,i)=>{ c.style.background=inkColor(i); c.classList.toggle('show',!!((m>>i)&1)); });

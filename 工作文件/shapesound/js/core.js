@@ -21,11 +21,12 @@ const MINORISH = new Set(['minor','minPent','blues','phrygian','dorian','harmMin
 const QUANT = {'4':{label:'1/4',n:4},'8':{label:'1/8',n:8},'8t':{label:'1/8 三连音',n:12,trip:true},
   '16':{label:'1/16',n:16},'16t':{label:'1/16 三连音',n:24,trip:true},'32':{label:'1/32',n:32}};
 const SWING = {off:{label:'关',v:0},light:{label:'轻',v:.10},medium:{label:'中',v:.20},hard:{label:'重',v:.33}};
-const INSTR = ['键盘','拨弦','钟','马林巴','长笛','弦乐','风铃','贝斯','8-bit'];
+const INSTR = ['键盘','拨弦','钟','马林巴','长笛','弦乐','风铃','贝斯','8-bit','铜管','管风琴','竖琴','电钢琴','合唱','鼓组'];
+const NINK = INSTR.length, DRUM_INK = 14;   // 鼓组：线越低越是底鼓，越高越是镲
 const PALETTES = [
-  ['#2a9d8f','#e2553a','#7b6cf6','#f2a23a','#3a5bd9','#e06aa8','#79bfe9','#2b2b2b','#f0bf8a'],   // 明亮
-  ['#1e6fa8','#c8382b','#e5b23b','#2e7d5b','#9d2933','#3b3f52','#a0522d','#7fa9bd','#7e5aa8'],   // 国色：石青 朱砂 藤黄 松绿 胭脂 黛 赭石 月白 青莲
-  ['#00b3a4','#ff5d73','#a78bfa','#ffb020','#4f7cff','#ff7ac6','#5ad1ff','#8a8f9c','#ffd08a'],   // 霓虹
+  ['#2a9d8f','#e2553a','#7b6cf6','#f2a23a','#3a5bd9','#e06aa8','#79bfe9','#2b2b2b','#f0bf8a','#c9a227','#8e3b46','#8cc152','#1f6f8b','#c79be0','#8a8a8a'],   // 明亮
+  ['#1e6fa8','#c8382b','#e5b23b','#2e7d5b','#9d2933','#3b3f52','#a0522d','#7fa9bd','#7e5aa8','#d9b611','#4c221b','#789262','#065279','#cca4e3','#75878a'],   // 国色：石青 朱砂 藤黄 松绿 胭脂 黛 赭石 月白 青莲 秋香 紫檀 竹青 靛蓝 丁香 苍
+  ['#00b3a4','#ff5d73','#a78bfa','#ffb020','#4f7cff','#ff7ac6','#5ad1ff','#8a8f9c','#ffd08a','#ffe14d','#c2185b','#a3e635','#22d3ee','#e9a8ff','#9ca3af'],   // 霓虹
 ];
 const PAPERS = ['paper','sky','night','photo'];
 const PAPER_NAMES = {paper:'纸',sky:'天空',night:'夜',photo:'照片'};
@@ -130,8 +131,25 @@ function ensureAudio(){
   return ctx;
 }
 
-/* 九种乐器，全部实时合成。返回 {release(t)} 供实时演奏松键用。 */
+/* 十五种乐器，全部实时合成。返回 {release(t)} 供实时演奏松键用。 */
+// 鼓组：看这个音在当前音阶里的相对高度，决定敲哪一件鼓（0 底鼓 1 通鼓 2 军鼓 3 闭镲 4 开镲 5 吊镲）
+function drumKind(f){
+  const m=69+12*Math.log2(f/440)-S.cents/100, R=rows(); let best=0;
+  R.forEach((x,i)=>{ if(Math.abs(x-m)<Math.abs(R[best]-m)) best=i; });
+  return drumKindAt(best/Math.max(1,R.length-1));
+}
+const drumKindAt=p=>p<.2?0:p<.35?1:p<.55?2:p<.75?3:p<.9?4:5;
+function drumHit(ac,out,k,t,vel){
+  const P=[{sines:[[160,1,[46,.035]],[320,.12,[90,.02]]],peak:1.3,tau:.14,len:.6},   // 底鼓
+           {sines:[[200,1,[110,.08]]],noise:{amp:.08},peak:.9,tau:.18,len:.6},       // 通鼓
+           {sines:[[200,.3,[160,.05]]],noise:{amp:.55,hp:1200},peak:1,tau:.07,len:.35}, // 军鼓
+           {noise:{amp:.5,hp:7000},peak:.4,tau:.02,len:.1},                        // 闭镲
+           {noise:{amp:.5,hp:6500},peak:.35,tau:.16,len:.6},                       // 开镲
+           {noise:{amp:.6,hp:4500},peak:.42,tau:.55,len:2.2}][k];                  // 吊镲
+  hit(ac,out,t,{...P,peak:P.peak*vel*.75});
+}
 function voice(ac, out, ink, f, t, dur, vel=.8){
+  if(ink===DRUM_INK){ drumHit(ac,out,drumKind(f),t,vel); return {release(){}}; }
   const g=ac.createGain(); g.gain.value=0; g.connect(out);
   const nodes=[], G=g.gain;
   const osc=(type,freq)=>{ const o=ac.createOscillator(); o.type=type; o.frequency.value=freq; nodes.push(o); return o; };
@@ -180,6 +198,32 @@ function voice(ac, out, ink, f, t, dur, vel=.8){
       const a=amp(.6); o.connect(lp); lp.connect(g); s.connect(a); a.connect(g);
       const pk=.22*vel; G.setValueAtTime(0,t); G.linearRampToValueAtTime(pk,t+.006); G.setTargetAtTime(pk*.6,t+.006,.15);
       G.setValueAtTime(pk*.6,t+D); G.setTargetAtTime(0,t+D,.06); end=t+D+.5; break; }
+    case 9:{ // 铜管：两个略失谐的锯齿波 + 随起音打开的低通，像“吹”出来的
+      const o1=osc('sawtooth',f), o2=osc('sawtooth',f*1.003), lp=ac.createBiquadFilter(); lp.type='lowpass'; lp.Q.value=1.2;
+      lp.frequency.setValueAtTime(f*1.2,t); lp.frequency.linearRampToValueAtTime(Math.min(f*7,9000),t+.08); lp.frequency.setTargetAtTime(Math.min(f*4,7000),t+.08,.2);
+      o1.connect(lp); o2.connect(lp); lp.connect(g); vibrato(o1.frequency,5.5,f*.004,.35);
+      const pk=.13*vel; G.setValueAtTime(0,t); G.linearRampToValueAtTime(pk,t+.05); G.setTargetAtTime(pk*.8,t+.05,.2);
+      G.setValueAtTime(pk*.8,t+D); G.setTargetAtTime(0,t+D,.07); end=t+D+.5; break; }
+    case 10:{ // 管风琴：几根“音栓”叠在一起，按下就响、松开就停
+      [[.5,.25],[1,.5],[2,.3],[3,.15],[4,.12]].forEach(([r,v])=>{ if(f*r>15000) return; const o=osc('sine',f*r), a=amp(v); o.connect(a); a.connect(g); });
+      const pk=.18*vel; G.setValueAtTime(0,t); G.linearRampToValueAtTime(pk,t+.012); G.setValueAtTime(pk,t+D); G.setTargetAtTime(0,t+D,.05); end=t+D+.4; break; }
+    case 11:{ // 竖琴：明亮的拨弦，余音很长
+      const o1=osc('triangle',f), o2=osc('sine',f*2), a=amp(.3); o1.connect(g); o2.connect(a); a.connect(g);
+      a.gain.setValueAtTime(.3,t); a.gain.setTargetAtTime(0,t,.15);
+      const pk=.34*vel; G.setValueAtTime(0,t); G.linearRampToValueAtTime(pk,t+.003); G.setTargetAtTime(0,t+.003,.55); end=t+2.6; break; }
+    case 12:{ // 电钢琴：FM 合成 + 一点“叮”的金属音
+      const car=osc('sine',f), mod=osc('sine',f), mg=amp(0); mod.connect(mg); mg.connect(car.frequency); car.connect(g);
+      mg.gain.setValueAtTime(f*1.4,t); mg.gain.setTargetAtTime(f*.15,t,.18);
+      const tine=osc('sine',Math.min(f*7,14000)), ta=amp(0); tine.connect(ta); ta.connect(g); ta.gain.setValueAtTime(.06,t); ta.gain.setTargetAtTime(0,t,.03);
+      const pk=.3*vel; G.setValueAtTime(0,t); G.linearRampToValueAtTime(pk,t+.003); G.setTargetAtTime(pk*.4,t+.003,.4);
+      G.setTargetAtTime(0,t+Math.max(D,.15),.15); end=t+Math.max(D,.15)+1; break; }
+    case 13:{ // 合唱：三个失谐锯齿波 + “啊”的共振峰，慢慢起来
+      const mix=amp(1); [.995,1,1.006].forEach(k=>{ const o=osc('sawtooth',f*k); o.connect(mix); vibrato(o.frequency,4.8,f*.005,.4); });
+      const bp1=ac.createBiquadFilter(), bp2=ac.createBiquadFilter(); bp1.type='bandpass'; bp2.type='bandpass';
+      bp1.frequency.value=750; bp2.frequency.value=1150; bp1.Q.value=4; bp2.Q.value=4;
+      const lp=ac.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=Math.min(f*3,5000);
+      const fa=amp(1.6), la=amp(.25); mix.connect(bp1); mix.connect(bp2); mix.connect(lp); bp1.connect(fa); bp2.connect(fa); lp.connect(la); fa.connect(g); la.connect(g);
+      const pk=.12*vel; G.setValueAtTime(0,t); G.linearRampToValueAtTime(pk,t+.25); G.setValueAtTime(pk,t+D); G.setTargetAtTime(0,t+D,.3); end=t+D+1.6; break; }
     default:{ // 8-bit：方波，几乎没有包络
       const o=osc('square',f); o.connect(g);
       const pk=.09*vel; G.setValueAtTime(pk,t); G.setValueAtTime(pk*.8,t+.05); G.setValueAtTime(0,t+D*.92); end=t+D+.05; }

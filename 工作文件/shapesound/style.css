@@ -88,8 +88,8 @@ svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke
 #cv{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
 #hint{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:var(--muted);font-size:14px;pointer-events:none;text-align:center;line-height:1.9;transition:opacity .3s}
 
-/* 舞台模式：九宫格，一格一种乐器 */
-#cast{position:absolute;inset:0;display:none;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:2px;background:var(--uib)}
+/* 舞台模式：一格一种乐器（3 × 5） */
+#cast{position:absolute;inset:0;display:none;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(5,1fr);gap:2px;background:var(--uib)}
 body.mode3 #cast{display:grid}
 body.mode3 #cv{visibility:hidden}
 body.mode3 #hint{display:none}
