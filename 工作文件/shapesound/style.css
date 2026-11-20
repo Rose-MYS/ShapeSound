@@ -99,8 +99,8 @@ svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke
 .credit{font-size:11px;color:var(--muted);line-height:1.6}
 
 /* ---------- 主区 ---------- */
-#main{display:grid;grid-template-rows:1fr auto auto auto;gap:12px;min-height:0;min-width:0}
-#stage{position:relative;border-radius:12px;background:var(--paper);box-shadow:var(--shadow);border:1px solid var(--uib);overflow:hidden;
+#main{display:grid;grid-template-areas:'stage' 'inst' 'strip' 'bar';grid-template-rows:1fr auto auto auto;gap:12px;min-height:0;min-width:0}
+#stage{grid-area:stage;position:relative;border-radius:12px;background:var(--paper);box-shadow:var(--shadow);border:1px solid var(--uib);overflow:hidden;
   background-size:cover;background-position:center;min-height:200px}
 #stage.photo::before{content:"";position:absolute;inset:0;background:rgba(255,255,255,.42);pointer-events:none}
 #cv{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
@@ -122,7 +122,7 @@ body.mode3 #hint{display:none}
 @media (max-width:759px){ #prog3{display:inline-block} }
 
 /* Pages：时间线条 */
-#strip{display:none;overflow-x:auto;padding:2px 0 2px;max-height:34vh;overflow-y:auto}
+#strip{grid-area:strip;display:none;overflow-x:auto;padding:2px 0 2px;max-height:34vh;overflow-y:auto}
 body.pages-open #strip{display:block}
 .trk{display:flex;align-items:flex-start;margin-bottom:8px}
 .trk.ruler{margin-bottom:2px;align-items:flex-end}
@@ -146,7 +146,7 @@ body.pages-open #strip{display:block}
 .trackadd{margin-left:19px}
 
 /* 乐器面板 */
-#inst{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px 14px}
+#inst{grid-area:inst;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px 14px}
 body.noinst #inst{display:none}
 .f{display:flex;flex-direction:column;gap:4px;min-width:0}
 .f>label{font-size:11px;color:var(--muted)}
@@ -175,7 +175,7 @@ body.noinst #inst{display:none}
 .switch.on::after{left:19px}
 
 /* 走带 */
-#bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#bar{grid-area:bar;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 #play{width:42px;height:42px;background:var(--ink);color:var(--paper);border-color:var(--ink)}
 #play svg{width:18px;height:18px;fill:currentColor;stroke:none}
 #tempo{width:110px;accent-color:var(--ink)}
@@ -208,14 +208,29 @@ body.noinst #inst{display:none}
 
 @media (max-width:1100px){ #inst{grid-template-columns:repeat(3,minmax(0,1fr))} }
 @media (max-width:760px){
-  body{grid-template-columns:1fr;grid-template-rows:auto 1fr;padding:10px;gap:10px;overflow-y:auto;height:auto;min-height:100%}
-  html,body{overflow:auto}
+  body{grid-template-columns:minmax(0,1fr);grid-template-rows:auto 1fr;padding:10px;gap:10px;overflow:visible;height:auto;min-height:100%}
+  html{overflow:auto}
+  button,select{touch-action:manipulation}
   #side{flex-direction:row;flex-wrap:wrap;align-items:center;overflow:visible}
   #side .sp,.credit,.timbre{display:none}
-  .side-files{flex-direction:row;flex-wrap:wrap;align-items:center;width:100%}
-  .side-files .pill{white-space:nowrap;padding:6px 11px}
+  .side-files{flex-direction:row;gap:6px;flex-wrap:wrap;align-items:center;width:100%}
+  .side-files .pill{white-space:nowrap;padding:6px 11px;min-height:40px}
   .worknow{width:100%}
-  .g3{grid-template-columns:repeat(6,34px)} .ib,.sw{width:34px;height:34px}
-  #main{grid-template-rows:60vh auto auto auto}
-  #inst{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .g3{grid-template-columns:repeat(6,44px);gap:6px}
+  .g3:has(> :nth-child(3):last-child){grid-template-columns:repeat(3,44px)}
+  .ib,.sw{width:44px;height:44px}
+  #swatches .sw{width:36px;height:36px;margin:4px}
+  #main{grid-template-areas:'stage' 'bar' 'strip' 'inst';grid-template-rows:46vh auto auto auto;grid-template-rows:clamp(220px,46svh,460px) auto auto auto;gap:10px}
+  #bar{gap:8px;padding:8px;border:1px solid var(--uib);border-radius:12px;background:var(--paper)}
+  #bar .vsep{display:none}
+  #bar .grp{flex-wrap:wrap}
+  #play,.num{width:44px;height:44px}
+  #tap,.dots,#bpm,.sel,.box,.tg,.round,#piano{min-height:40px}
+  .round{width:40px}
+  #inst{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  #piano{min-width:0}
+  .dialog{padding:16px;max-height:90vh;max-height:90dvh}
+  .songs{grid-template-columns:minmax(0,1fr)}
+  .dialog .close{min-width:44px;min-height:44px}
+  .work{flex-wrap:wrap}
 }

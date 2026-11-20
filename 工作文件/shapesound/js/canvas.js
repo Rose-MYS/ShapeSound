@@ -2,9 +2,15 @@
 /* 形声 · 画布、画线/橡皮、实时演奏、速度、乐器面板、显示模式、Pages 时间线 */
 // ---------------- 画布 ----------------
 const cv=$('cv'), g2d=cv.getContext('2d');
+const coarsePointer=window.matchMedia('(pointer: coarse)');
+const beatDots=document.querySelectorAll('.beat');
 let W=0,H=0,DPR=1;
 const PAD={l:40,r:16,t:18,b:18};
-function resize(){ const r=cv.getBoundingClientRect(); DPR=window.devicePixelRatio||1; W=r.width; H=r.height; cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR); }
+function resize(){
+  const r=cv.getBoundingClientRect(), ratio=window.devicePixelRatio||1;
+  DPR=coarsePointer.matches ? Math.min(ratio,2) : ratio;
+  W=r.width; H=r.height; cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR);
+}
 new ResizeObserver(resize).observe(cv);
 const gx=x=>PAD.l+x*(W-PAD.l-PAD.r), gy=y=>PAD.t+y*(H-PAD.t-PAD.b);
 const nx=px=>clamp((px-PAD.l)/(W-PAD.l-PAD.r),0,1), ny=py=>clamp((py-PAD.t)/(H-PAD.t-PAD.b),0,1);
@@ -13,7 +19,7 @@ let C={};
 function readColors(){ const cs=getComputedStyle(document.body), v=k=>cs.getPropertyValue(k).trim();
   C={line:v('--line'),line2:v('--line2'),line3:v('--line3'),muted:v('--muted'),ink:v('--ink'),accent:v('--accent'),paper:v('--paper')}; }
 
-let playheadX=-1, lastPhase=-1;
+let playheadX=-1, lastPhase=-1, lastBeatStep=null;
 function strokeYsAt(s,x){ // 这条线在横坐标 x 处的所有纵坐标（用于在播放头上画交点）
   const P=s.pts, ys=[];
   if(P.length===1){ if(Math.abs(P[0][0]-x)<.006) ys.push(P[0][1]); return ys; }
@@ -24,6 +30,11 @@ function strokeYsAt(s,x){ // 这条线在横坐标 x 处的所有纵坐标（用
 function draw(){
   requestAnimationFrame(draw);
   if(!W) return;
+  // 播放和像素模式需要在拖动时更新音符，普通画线可以等到松手。
+  if(strokeEventsDirty && (playing || S.mode===2)){
+    strokeEventsDirty=false;
+    computeEvents();
+  }
   const g=g2d; g.setTransform(DPR,0,0,DPR,0,0); g.clearRect(0,0,W,H);
   const R=rows(), n=R.length, N=stepsPerLoop(), spb=stepsPerBar(), beat=stepsPerBeat(), now=ctx?ctx.currentTime:0, tNow=performance.now();
 
@@ -33,7 +44,11 @@ function draw(){
     const cur=stepQueue[0];
     if(cur.time<=now){
       playheadX=(cur.step+clamp((now-cur.time)/stepDur(),0,1))/N; lastPhase=playheadX;
-      const b=Math.floor(cur.step/beat)%4; document.querySelectorAll('.beat').forEach((el,k)=>el.classList.toggle('on',k===b));
+      if(cur!==lastBeatStep){
+        lastBeatStep=cur;
+        const b=Math.floor(cur.step/beat)%4;
+        beatDots.forEach((el,k)=>el.classList.toggle('on',k===b));
+      }
     }
   }
   while(pendingRipples.length && pendingRipples[0].time<=now){ const p=pendingRipples.shift(); ripples.push({...p,born:tNow}); rowFlash.set(p.row,tNow); }
@@ -91,10 +106,11 @@ const tNowMs=()=>performance.now();
 
 // ---------------- 画线 / 橡皮 / 撤销重做 ----------------
 const ERASE_R=14, pointer={x:0,y:0,inside:false};
-let drawing=null, lastPreviewRow=-1, lastPreviewT=0, erasedAny=false;
+let drawing=null, activePointer=null, strokeEventsDirty=false;
+let lastPreviewRow=-1, lastPreviewT=0, erasedAny=false;
 function snapshot(){ undoStack.push(JSON.stringify(strokes)); if(undoStack.length>80) undoStack.shift(); redoStack.length=0; renderUndo(); }
 function setStrokes(arr){ strokes.length=0; strokes.push(...arr); }
-function changed(){ computeEvents(); $('hint').style.opacity=strokes.length?0:1; renderUndo(); if(timelineOn) refreshThumb(); autosave(); updateGridPulse(); }
+function changed(){ strokeEventsDirty=false; computeEvents(); $('hint').style.opacity=strokes.length?0:1; renderUndo(); if(timelineOn) refreshThumb(); autosave(); updateGridPulse(); }
 function renderUndo(){ $('tUndo').disabled=!undoStack.length; $('tRedo').disabled=!redoStack.length; }
 function undo(){ if(!undoStack.length) return; redoStack.push(JSON.stringify(strokes)); setStrokes(JSON.parse(undoStack.pop())); changed(); }
 function redo(){ if(!redoStack.length) return; undoStack.push(JSON.stringify(strokes)); setStrokes(JSON.parse(redoStack.pop())); changed(); }
@@ -108,24 +124,42 @@ function eraseAt(px,py){
     if(k===0) return Math.hypot(ax-px,ay-py)<ERASE_R;
     const b=s.pts[k-1],bx=gx(b[0]),by=gy(b[1]),dx=ax-bx,dy=ay-by,L=dx*dx+dy*dy; const u=clamp(L?((px-bx)*dx+(py-by)*dy)/L:0,0,1);
     return Math.hypot(bx+u*dx-px,by+u*dy-py)<ERASE_R; }));
-  if(keep.length!==strokes.length){ erasedAny=true; setStrokes(keep); computeEvents(); }
+  if(keep.length===strokes.length) return;
+  if(!erasedAny) snapshot();
+  erasedAny=true; setStrokes(keep); strokeEventsDirty=true;
 }
 const pos=e=>{ const r=cv.getBoundingClientRect(); return [e.clientX-r.left,e.clientY-r.top]; };
 cv.addEventListener('pointerdown',e=>{
-  ensureAudio(); cv.setPointerCapture(e.pointerId); const [px,py]=pos(e); snapshot();
+  if(activePointer!==null || !e.isPrimary || e.button!==0) return;
+  activePointer=e.pointerId; cv.setPointerCapture(activePointer);
+  const [px,py]=pos(e);
+  pointer.x=px; pointer.y=py; pointer.inside=true;
   if(tool==='erase'){ erasedAny=false; drawing={erase:true}; eraseAt(px,py); return; }
-  drawing={ink:S.ink,pts:[[nx(px),ny(py)]]}; strokes.push(drawing); lastPreviewRow=-1; previewAt(ny(py));
+  ensureAudio(); snapshot();
+  drawing={ink:S.ink,pts:[[nx(px),ny(py)]]}; strokes.push(drawing);
+  strokeEventsDirty=true; lastPreviewRow=-1; lastPreviewT=-Infinity; previewAt(ny(py));
 });
 cv.addEventListener('pointermove',e=>{
+  if(activePointer!==null ? e.pointerId!==activePointer : e.pointerType==='touch') return;
   const [px,py]=pos(e); pointer.x=px; pointer.y=py; pointer.inside=true;
   if(!drawing) return;
   if(drawing.erase){ eraseAt(px,py); return; }
   const L=drawing.pts[drawing.pts.length-1]; if(Math.hypot(gx(L[0])-px,gy(L[1])-py)<3) return;
-  drawing.pts.push([nx(px),ny(py)]); previewAt(ny(py)); computeEvents();
+  drawing.pts.push([nx(px),ny(py)]); strokeEventsDirty=true; previewAt(ny(py));
 });
-cv.addEventListener('pointerleave',()=>pointer.inside=false);
-const endDraw=()=>{ if(!drawing) return; if(drawing.erase&&!erasedAny){ undoStack.pop(); renderUndo(); } drawing=null; changed(); };
-cv.addEventListener('pointerup',endDraw); cv.addEventListener('pointercancel',endDraw);
+cv.addEventListener('pointerleave',e=>{ if(activePointer===null || e.pointerId===activePointer) pointer.inside=false; });
+function endDraw(e){
+  if(e.pointerId!==activePointer) return;
+  activePointer=null;
+  if(e.pointerType==='touch') pointer.inside=false;
+  if(!drawing) return;
+  const didChange=!drawing.erase || erasedAny;
+  drawing=null;
+  if(didChange) changed();
+}
+cv.addEventListener('pointerup',endDraw);
+cv.addEventListener('pointercancel',endDraw);
+cv.addEventListener('lostpointercapture',endDraw);
 
 // ---------------- 实时演奏：MIDI 键盘 / 电脑键盘 ----------------
 const held=new Map();

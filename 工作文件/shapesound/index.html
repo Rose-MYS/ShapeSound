@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>形声 · 画出来的音乐</title>
 <link rel="stylesheet" href="style.css">
 </head>
@@ -56,21 +56,6 @@
     <div id="hint">在纸上随便画几笔，然后按 ▶<br>线越高，音越高；从左到右是时间</div>
   </main>
 
-  <div id="inst">
-    <div class="f"><label>调</label><div class="c"><select class="sel key" id="selKey"></select><div id="piano"></div></div></div>
-    <div class="f"><label>音阶</label><div class="c"><select class="sel" id="selScale"></select></div></div>
-    <div class="f"><label>音域</label><div class="c"><select class="sel" id="selRange"><option value="1">1 个八度</option><option value="2">2 个八度</option><option value="3">3 个八度</option></select></div></div>
-    <div class="f"><label>八度</label><div class="c"><button class="round" id="octDn">−</button><span class="oct" id="octVal">0</span><button class="round" id="octUp">+</button></div></div>
-    <div class="f"><label>微调（音分）</label><div class="c"><input class="box" id="tune" type="number" min="-50" max="50" step="1" value="0"></div></div>
-    <div class="f"><label>量化</label><div class="c"><select class="sel" id="selQuant"></select></div></div>
-    <div class="f"><label>摇摆</label><div class="c"><select class="sel" id="selSwing"></select></div></div>
-    <div class="f"><label>节拍器</label><div class="c"><button class="tg" id="click">关</button></div></div>
-    <div class="f"><label>MIDI 输入</label><div class="c"><button class="tg" id="midi">关</button></div></div>
-    <div class="f"><label>导出</label><div class="c"><button class="tg" id="expWav">WAV</button><button class="tg" id="expMidi">MIDI</button></div></div>
-  </div>
-
-  <div id="strip"></div>
-
   <div id="bar">
     <button class="ib" id="pagesBtn" data-tip="Pages：把几页串成一条时间线"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M9 5v14M15 5v14"/></svg></button>
     <button class="ib" id="loopBtn" data-tip="单页循环：开着时只循环眼前这一页；关掉时一页放完接着放下一页（和 Pages 面板开不开无关）"><svg viewBox="0 0 24 24"><path d="M17 2l3 3-3 3"/><path d="M4 11V9a4 4 0 014-4h12"/><path d="M7 22l-3-3 3-3"/><path d="M20 13v2a4 4 0 01-4 4H4"/><path d="M11 10h1.5v5"/></svg></button>
@@ -94,6 +79,22 @@
     <button class="dots" id="beat2" data-tip="鼓伴奏：底鼓、军鼓轮流，加上镲。点一下开，再点关"><b>••</b>鼓</button>
     <button class="dots" id="beat4" data-tip="琶音伴奏：跟着调自动循环一段分解和弦。点一下开，再点关"><b>•••</b>琶音</button></div>
   </div>
+
+  <div id="inst">
+    <div class="f"><label>调</label><div class="c"><select class="sel key" id="selKey"></select><div id="piano"></div></div></div>
+    <div class="f"><label>音阶</label><div class="c"><select class="sel" id="selScale"></select></div></div>
+    <div class="f"><label>音域</label><div class="c"><select class="sel" id="selRange"><option value="1">1 个八度</option><option value="2">2 个八度</option><option value="3">3 个八度</option></select></div></div>
+    <div class="f"><label>八度</label><div class="c"><button class="round" id="octDn">−</button><span class="oct" id="octVal">0</span><button class="round" id="octUp">+</button></div></div>
+    <div class="f"><label>微调（音分）</label><div class="c"><input class="box" id="tune" type="number" min="-50" max="50" step="1" value="0"></div></div>
+    <div class="f"><label>量化</label><div class="c"><select class="sel" id="selQuant"></select></div></div>
+    <div class="f"><label>摇摆</label><div class="c"><select class="sel" id="selSwing"></select></div></div>
+    <div class="f"><label>节拍器</label><div class="c"><button class="tg" id="click">关</button></div></div>
+    <div class="f"><label>MIDI 输入</label><div class="c"><button class="tg" id="midi">关</button></div></div>
+    <div class="f"><label>导出</label><div class="c"><button class="tg" id="expWav">WAV</button><button class="tg" id="expMidi">MIDI</button></div></div>
+  </div>
+
+  <div id="strip"></div>
+
 </section>
 
 <div class="overlay" id="help"><div class="dialog">

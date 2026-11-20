@@ -3,7 +3,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>形声 · 画出来的音乐</title>
 <style>
 :root{
@@ -107,8 +107,8 @@ svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke
 .credit{font-size:11px;color:var(--muted);line-height:1.6}
 
 /* ---------- 主区 ---------- */
-#main{display:grid;grid-template-rows:1fr auto auto auto;gap:12px;min-height:0;min-width:0}
-#stage{position:relative;border-radius:12px;background:var(--paper);box-shadow:var(--shadow);border:1px solid var(--uib);overflow:hidden;
+#main{display:grid;grid-template-areas:'stage' 'inst' 'strip' 'bar';grid-template-rows:1fr auto auto auto;gap:12px;min-height:0;min-width:0}
+#stage{grid-area:stage;position:relative;border-radius:12px;background:var(--paper);box-shadow:var(--shadow);border:1px solid var(--uib);overflow:hidden;
   background-size:cover;background-position:center;min-height:200px}
 #stage.photo::before{content:"";position:absolute;inset:0;background:rgba(255,255,255,.42);pointer-events:none}
 #cv{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
@@ -130,7 +130,7 @@ body.mode3 #hint{display:none}
 @media (max-width:759px){ #prog3{display:inline-block} }
 
 /* Pages：时间线条 */
-#strip{display:none;overflow-x:auto;padding:2px 0 2px;max-height:34vh;overflow-y:auto}
+#strip{grid-area:strip;display:none;overflow-x:auto;padding:2px 0 2px;max-height:34vh;overflow-y:auto}
 body.pages-open #strip{display:block}
 .trk{display:flex;align-items:flex-start;margin-bottom:8px}
 .trk.ruler{margin-bottom:2px;align-items:flex-end}
@@ -154,7 +154,7 @@ body.pages-open #strip{display:block}
 .trackadd{margin-left:19px}
 
 /* 乐器面板 */
-#inst{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px 14px}
+#inst{grid-area:inst;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px 14px}
 body.noinst #inst{display:none}
 .f{display:flex;flex-direction:column;gap:4px;min-width:0}
 .f>label{font-size:11px;color:var(--muted)}
@@ -183,7 +183,7 @@ body.noinst #inst{display:none}
 .switch.on::after{left:19px}
 
 /* 走带 */
-#bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#bar{grid-area:bar;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 #play{width:42px;height:42px;background:var(--ink);color:var(--paper);border-color:var(--ink)}
 #play svg{width:18px;height:18px;fill:currentColor;stroke:none}
 #tempo{width:110px;accent-color:var(--ink)}
@@ -216,16 +216,31 @@ body.noinst #inst{display:none}
 
 @media (max-width:1100px){ #inst{grid-template-columns:repeat(3,minmax(0,1fr))} }
 @media (max-width:760px){
-  body{grid-template-columns:1fr;grid-template-rows:auto 1fr;padding:10px;gap:10px;overflow-y:auto;height:auto;min-height:100%}
-  html,body{overflow:auto}
+  body{grid-template-columns:minmax(0,1fr);grid-template-rows:auto 1fr;padding:10px;gap:10px;overflow:visible;height:auto;min-height:100%}
+  html{overflow:auto}
+  button,select{touch-action:manipulation}
   #side{flex-direction:row;flex-wrap:wrap;align-items:center;overflow:visible}
   #side .sp,.credit,.timbre{display:none}
-  .side-files{flex-direction:row;flex-wrap:wrap;align-items:center;width:100%}
-  .side-files .pill{white-space:nowrap;padding:6px 11px}
+  .side-files{flex-direction:row;gap:6px;flex-wrap:wrap;align-items:center;width:100%}
+  .side-files .pill{white-space:nowrap;padding:6px 11px;min-height:40px}
   .worknow{width:100%}
-  .g3{grid-template-columns:repeat(6,34px)} .ib,.sw{width:34px;height:34px}
-  #main{grid-template-rows:60vh auto auto auto}
-  #inst{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .g3{grid-template-columns:repeat(6,44px);gap:6px}
+  .g3:has(> :nth-child(3):last-child){grid-template-columns:repeat(3,44px)}
+  .ib,.sw{width:44px;height:44px}
+  #swatches .sw{width:36px;height:36px;margin:4px}
+  #main{grid-template-areas:'stage' 'bar' 'strip' 'inst';grid-template-rows:46vh auto auto auto;grid-template-rows:clamp(220px,46svh,460px) auto auto auto;gap:10px}
+  #bar{gap:8px;padding:8px;border:1px solid var(--uib);border-radius:12px;background:var(--paper)}
+  #bar .vsep{display:none}
+  #bar .grp{flex-wrap:wrap}
+  #play,.num{width:44px;height:44px}
+  #tap,.dots,#bpm,.sel,.box,.tg,.round,#piano{min-height:40px}
+  .round{width:40px}
+  #inst{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  #piano{min-width:0}
+  .dialog{padding:16px;max-height:90vh;max-height:90dvh}
+  .songs{grid-template-columns:minmax(0,1fr)}
+  .dialog .close{min-width:44px;min-height:44px}
+  .work{flex-wrap:wrap}
 }
 </style>
 </head>
@@ -279,21 +294,6 @@ body.noinst #inst{display:none}
     <div id="hint">在纸上随便画几笔，然后按 ▶<br>线越高，音越高；从左到右是时间</div>
   </main>
 
-  <div id="inst">
-    <div class="f"><label>调</label><div class="c"><select class="sel key" id="selKey"></select><div id="piano"></div></div></div>
-    <div class="f"><label>音阶</label><div class="c"><select class="sel" id="selScale"></select></div></div>
-    <div class="f"><label>音域</label><div class="c"><select class="sel" id="selRange"><option value="1">1 个八度</option><option value="2">2 个八度</option><option value="3">3 个八度</option></select></div></div>
-    <div class="f"><label>八度</label><div class="c"><button class="round" id="octDn">−</button><span class="oct" id="octVal">0</span><button class="round" id="octUp">+</button></div></div>
-    <div class="f"><label>微调（音分）</label><div class="c"><input class="box" id="tune" type="number" min="-50" max="50" step="1" value="0"></div></div>
-    <div class="f"><label>量化</label><div class="c"><select class="sel" id="selQuant"></select></div></div>
-    <div class="f"><label>摇摆</label><div class="c"><select class="sel" id="selSwing"></select></div></div>
-    <div class="f"><label>节拍器</label><div class="c"><button class="tg" id="click">关</button></div></div>
-    <div class="f"><label>MIDI 输入</label><div class="c"><button class="tg" id="midi">关</button></div></div>
-    <div class="f"><label>导出</label><div class="c"><button class="tg" id="expWav">WAV</button><button class="tg" id="expMidi">MIDI</button></div></div>
-  </div>
-
-  <div id="strip"></div>
-
   <div id="bar">
     <button class="ib" id="pagesBtn" data-tip="Pages：把几页串成一条时间线"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M9 5v14M15 5v14"/></svg></button>
     <button class="ib" id="loopBtn" data-tip="单页循环：开着时只循环眼前这一页；关掉时一页放完接着放下一页（和 Pages 面板开不开无关）"><svg viewBox="0 0 24 24"><path d="M17 2l3 3-3 3"/><path d="M4 11V9a4 4 0 014-4h12"/><path d="M7 22l-3-3 3-3"/><path d="M20 13v2a4 4 0 01-4 4H4"/><path d="M11 10h1.5v5"/></svg></button>
@@ -317,6 +317,22 @@ body.noinst #inst{display:none}
     <button class="dots" id="beat2" data-tip="鼓伴奏：底鼓、军鼓轮流，加上镲。点一下开，再点关"><b>••</b>鼓</button>
     <button class="dots" id="beat4" data-tip="琶音伴奏：跟着调自动循环一段分解和弦。点一下开，再点关"><b>•••</b>琶音</button></div>
   </div>
+
+  <div id="inst">
+    <div class="f"><label>调</label><div class="c"><select class="sel key" id="selKey"></select><div id="piano"></div></div></div>
+    <div class="f"><label>音阶</label><div class="c"><select class="sel" id="selScale"></select></div></div>
+    <div class="f"><label>音域</label><div class="c"><select class="sel" id="selRange"><option value="1">1 个八度</option><option value="2">2 个八度</option><option value="3">3 个八度</option></select></div></div>
+    <div class="f"><label>八度</label><div class="c"><button class="round" id="octDn">−</button><span class="oct" id="octVal">0</span><button class="round" id="octUp">+</button></div></div>
+    <div class="f"><label>微调（音分）</label><div class="c"><input class="box" id="tune" type="number" min="-50" max="50" step="1" value="0"></div></div>
+    <div class="f"><label>量化</label><div class="c"><select class="sel" id="selQuant"></select></div></div>
+    <div class="f"><label>摇摆</label><div class="c"><select class="sel" id="selSwing"></select></div></div>
+    <div class="f"><label>节拍器</label><div class="c"><button class="tg" id="click">关</button></div></div>
+    <div class="f"><label>MIDI 输入</label><div class="c"><button class="tg" id="midi">关</button></div></div>
+    <div class="f"><label>导出</label><div class="c"><button class="tg" id="expWav">WAV</button><button class="tg" id="expMidi">MIDI</button></div></div>
+  </div>
+
+  <div id="strip"></div>
+
 </section>
 
 <div class="overlay" id="help"><div class="dialog">
@@ -738,7 +754,7 @@ function advanceTimeline(){
 }
 function play(){
   ensureAudio(); if(playing) return;
-  computeEvents(); playing=true; loopStarted=false; curStep=0; stepQueue.length=0; nextTime=ctx.currentTime+.06;
+  computeEvents(); playing=true; loopStarted=false; curStep=0; stepQueue.length=0; nextTime=ctx.currentTime+.02;
   timer=setInterval(tick,25); tick(); renderPlay();
 }
 function pause(){ playing=false; clearInterval(timer); stepQueue.length=0; pendingRipples.length=0; renderPlay(); document.querySelectorAll('.beat').forEach(b=>b.classList.remove('on')); }
@@ -752,9 +768,15 @@ function renderPlay(){ $('play').innerHTML = playing ? '<svg viewBox="0 0 24 24"
 /* 形声 · 画布、画线/橡皮、实时演奏、速度、乐器面板、显示模式、Pages 时间线 */
 // ---------------- 画布 ----------------
 const cv=$('cv'), g2d=cv.getContext('2d');
+const coarsePointer=window.matchMedia('(pointer: coarse)');
+const beatDots=document.querySelectorAll('.beat');
 let W=0,H=0,DPR=1;
 const PAD={l:40,r:16,t:18,b:18};
-function resize(){ const r=cv.getBoundingClientRect(); DPR=window.devicePixelRatio||1; W=r.width; H=r.height; cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR); }
+function resize(){
+  const r=cv.getBoundingClientRect(), ratio=window.devicePixelRatio||1;
+  DPR=coarsePointer.matches ? Math.min(ratio,2) : ratio;
+  W=r.width; H=r.height; cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR);
+}
 new ResizeObserver(resize).observe(cv);
 const gx=x=>PAD.l+x*(W-PAD.l-PAD.r), gy=y=>PAD.t+y*(H-PAD.t-PAD.b);
 const nx=px=>clamp((px-PAD.l)/(W-PAD.l-PAD.r),0,1), ny=py=>clamp((py-PAD.t)/(H-PAD.t-PAD.b),0,1);
@@ -763,7 +785,7 @@ let C={};
 function readColors(){ const cs=getComputedStyle(document.body), v=k=>cs.getPropertyValue(k).trim();
   C={line:v('--line'),line2:v('--line2'),line3:v('--line3'),muted:v('--muted'),ink:v('--ink'),accent:v('--accent'),paper:v('--paper')}; }
 
-let playheadX=-1, lastPhase=-1;
+let playheadX=-1, lastPhase=-1, lastBeatStep=null;
 function strokeYsAt(s,x){ // 这条线在横坐标 x 处的所有纵坐标（用于在播放头上画交点）
   const P=s.pts, ys=[];
   if(P.length===1){ if(Math.abs(P[0][0]-x)<.006) ys.push(P[0][1]); return ys; }
@@ -774,6 +796,11 @@ function strokeYsAt(s,x){ // 这条线在横坐标 x 处的所有纵坐标（用
 function draw(){
   requestAnimationFrame(draw);
   if(!W) return;
+  // 播放和像素模式需要在拖动时更新音符，普通画线可以等到松手。
+  if(strokeEventsDirty && (playing || S.mode===2)){
+    strokeEventsDirty=false;
+    computeEvents();
+  }
   const g=g2d; g.setTransform(DPR,0,0,DPR,0,0); g.clearRect(0,0,W,H);
   const R=rows(), n=R.length, N=stepsPerLoop(), spb=stepsPerBar(), beat=stepsPerBeat(), now=ctx?ctx.currentTime:0, tNow=performance.now();
 
@@ -783,7 +810,11 @@ function draw(){
     const cur=stepQueue[0];
     if(cur.time<=now){
       playheadX=(cur.step+clamp((now-cur.time)/stepDur(),0,1))/N; lastPhase=playheadX;
-      const b=Math.floor(cur.step/beat)%4; document.querySelectorAll('.beat').forEach((el,k)=>el.classList.toggle('on',k===b));
+      if(cur!==lastBeatStep){
+        lastBeatStep=cur;
+        const b=Math.floor(cur.step/beat)%4;
+        beatDots.forEach((el,k)=>el.classList.toggle('on',k===b));
+      }
     }
   }
   while(pendingRipples.length && pendingRipples[0].time<=now){ const p=pendingRipples.shift(); ripples.push({...p,born:tNow}); rowFlash.set(p.row,tNow); }
@@ -841,10 +872,11 @@ const tNowMs=()=>performance.now();
 
 // ---------------- 画线 / 橡皮 / 撤销重做 ----------------
 const ERASE_R=14, pointer={x:0,y:0,inside:false};
-let drawing=null, lastPreviewRow=-1, lastPreviewT=0, erasedAny=false;
+let drawing=null, activePointer=null, strokeEventsDirty=false;
+let lastPreviewRow=-1, lastPreviewT=0, erasedAny=false;
 function snapshot(){ undoStack.push(JSON.stringify(strokes)); if(undoStack.length>80) undoStack.shift(); redoStack.length=0; renderUndo(); }
 function setStrokes(arr){ strokes.length=0; strokes.push(...arr); }
-function changed(){ computeEvents(); $('hint').style.opacity=strokes.length?0:1; renderUndo(); if(timelineOn) refreshThumb(); autosave(); updateGridPulse(); }
+function changed(){ strokeEventsDirty=false; computeEvents(); $('hint').style.opacity=strokes.length?0:1; renderUndo(); if(timelineOn) refreshThumb(); autosave(); updateGridPulse(); }
 function renderUndo(){ $('tUndo').disabled=!undoStack.length; $('tRedo').disabled=!redoStack.length; }
 function undo(){ if(!undoStack.length) return; redoStack.push(JSON.stringify(strokes)); setStrokes(JSON.parse(undoStack.pop())); changed(); }
 function redo(){ if(!redoStack.length) return; undoStack.push(JSON.stringify(strokes)); setStrokes(JSON.parse(redoStack.pop())); changed(); }
@@ -858,24 +890,42 @@ function eraseAt(px,py){
     if(k===0) return Math.hypot(ax-px,ay-py)<ERASE_R;
     const b=s.pts[k-1],bx=gx(b[0]),by=gy(b[1]),dx=ax-bx,dy=ay-by,L=dx*dx+dy*dy; const u=clamp(L?((px-bx)*dx+(py-by)*dy)/L:0,0,1);
     return Math.hypot(bx+u*dx-px,by+u*dy-py)<ERASE_R; }));
-  if(keep.length!==strokes.length){ erasedAny=true; setStrokes(keep); computeEvents(); }
+  if(keep.length===strokes.length) return;
+  if(!erasedAny) snapshot();
+  erasedAny=true; setStrokes(keep); strokeEventsDirty=true;
 }
 const pos=e=>{ const r=cv.getBoundingClientRect(); return [e.clientX-r.left,e.clientY-r.top]; };
 cv.addEventListener('pointerdown',e=>{
-  ensureAudio(); cv.setPointerCapture(e.pointerId); const [px,py]=pos(e); snapshot();
+  if(activePointer!==null || !e.isPrimary || e.button!==0) return;
+  activePointer=e.pointerId; cv.setPointerCapture(activePointer);
+  const [px,py]=pos(e);
+  pointer.x=px; pointer.y=py; pointer.inside=true;
   if(tool==='erase'){ erasedAny=false; drawing={erase:true}; eraseAt(px,py); return; }
-  drawing={ink:S.ink,pts:[[nx(px),ny(py)]]}; strokes.push(drawing); lastPreviewRow=-1; previewAt(ny(py));
+  ensureAudio(); snapshot();
+  drawing={ink:S.ink,pts:[[nx(px),ny(py)]]}; strokes.push(drawing);
+  strokeEventsDirty=true; lastPreviewRow=-1; lastPreviewT=-Infinity; previewAt(ny(py));
 });
 cv.addEventListener('pointermove',e=>{
+  if(activePointer!==null ? e.pointerId!==activePointer : e.pointerType==='touch') return;
   const [px,py]=pos(e); pointer.x=px; pointer.y=py; pointer.inside=true;
   if(!drawing) return;
   if(drawing.erase){ eraseAt(px,py); return; }
   const L=drawing.pts[drawing.pts.length-1]; if(Math.hypot(gx(L[0])-px,gy(L[1])-py)<3) return;
-  drawing.pts.push([nx(px),ny(py)]); previewAt(ny(py)); computeEvents();
+  drawing.pts.push([nx(px),ny(py)]); strokeEventsDirty=true; previewAt(ny(py));
 });
-cv.addEventListener('pointerleave',()=>pointer.inside=false);
-const endDraw=()=>{ if(!drawing) return; if(drawing.erase&&!erasedAny){ undoStack.pop(); renderUndo(); } drawing=null; changed(); };
-cv.addEventListener('pointerup',endDraw); cv.addEventListener('pointercancel',endDraw);
+cv.addEventListener('pointerleave',e=>{ if(activePointer===null || e.pointerId===activePointer) pointer.inside=false; });
+function endDraw(e){
+  if(e.pointerId!==activePointer) return;
+  activePointer=null;
+  if(e.pointerType==='touch') pointer.inside=false;
+  if(!drawing) return;
+  const didChange=!drawing.erase || erasedAny;
+  drawing=null;
+  if(didChange) changed();
+}
+cv.addEventListener('pointerup',endDraw);
+cv.addEventListener('pointercancel',endDraw);
+cv.addEventListener('lostpointercapture',endDraw);
 
 // ---------------- 实时演奏：MIDI 键盘 / 电脑键盘 ----------------
 const held=new Map();

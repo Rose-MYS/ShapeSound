@@ -344,7 +344,7 @@ function advanceTimeline(){
 }
 function play(){
   ensureAudio(); if(playing) return;
-  computeEvents(); playing=true; loopStarted=false; curStep=0; stepQueue.length=0; nextTime=ctx.currentTime+.06;
+  computeEvents(); playing=true; loopStarted=false; curStep=0; stepQueue.length=0; nextTime=ctx.currentTime+.02;
   timer=setInterval(tick,25); tick(); renderPlay();
 }
 function pause(){ playing=false; clearInterval(timer); stepQueue.length=0; pendingRipples.length=0; renderPlay(); document.querySelectorAll('.beat').forEach(b=>b.classList.remove('on')); }
