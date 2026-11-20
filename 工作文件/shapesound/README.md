@@ -3,7 +3,7 @@
 一件"画线即作曲"的网页可视化乐器。玩法与界面布局参考了 playmusictheory.net/play（作者 Tala Rae Schlossberg）：在纸上画线，播放头从左往右扫过，碰到线条就发声。本项目的代码、文字、配色与图标均为独立编写。
 
 ## 运行
-双击 `index.html`，用 Chrome 或 Edge 打开即可。不用安装，也不用联网。
+双击 `index.html`，用 Chrome 或 Edge 打开即可。不用安装，也不用联网。`style.css` 和 `js/` 文件夹要和 `index.html` 放在一起（复制、发给别人时整个文件夹一起）。
 （如果 MIDI 键盘连不上，可在本目录运行 `python -m http.server 8000`，再打开 http://localhost:8000）
 
 ## 界面
@@ -36,4 +36,11 @@ Esc 关闭弹窗 · Ctrl+S 保存 · 空格 播放/暂停 · Ctrl+Z 撤销 · Ct
 - **精确定时**（`tick` / `scheduleStep`）：用 lookahead scheduler，每 25 ms 提前 120 ms 按 AudioContext 的时钟排好音符，不会像 setTimeout 那样抖动。画面根据已经排好的步实时插值出播放头的位置。
 - **合成**（`voice`）：加法合成（键盘、马林巴、风铃）、减法合成（拨弦、弦乐、贝斯）、FM 合成（钟）、带颤音和气声噪声的长笛、方波 8-bit；混响用程序生成的脉冲响应做卷积。
 - **导出**：WAV 用 OfflineAudioContext 渲染两遍循环，取第二遍，这样混响尾音会自然接回开头，循环拼接没有断口；MIDI 按 SMF 格式 0 手写字节编码。
-- 纯原生 HTML / CSS / JS，单文件，没有任何依赖。
+- 纯原生 HTML / CSS / JS，没有任何依赖。文件结构：
+  - `index.html`：页面结构
+  - `style.css`：样式
+  - `js/core.js`：音乐数据、状态、线条→音符、音频合成、伴奏、调度器
+  - `js/canvas.js`：画布绘制、画线/橡皮、实时演奏、乐器面板、显示模式、Pages 时间线
+  - `js/app.js`：工具栏、自动保存、录音、导出 WAV / MIDI、悬停提示
+  - `js/songs.js`：示例曲
+  - `js/library.js`：我的作品（作品库）和启动流程
