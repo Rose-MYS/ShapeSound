@@ -141,6 +141,7 @@ $('libSave').onclick=()=>{ if(saveCurrent($('libName').value,false)) closeLib();
 $('libSaveNew').onclick=()=>{ if(saveCurrent($('libName').value===currentWork.name?$('libName').value+' 副本':$('libName').value,true)) closeLib(); };
 $('libName').onkeydown=e=>{ e.stopPropagation(); if(e.key==='Enter') $('libSave').click(); };
 $('libNew').onclick=newWork;
+$('newBtn').onclick=newWork;
 $('libImport').onclick=()=>$('openFile').click();
 
 // ---------------- 启动 ----------------

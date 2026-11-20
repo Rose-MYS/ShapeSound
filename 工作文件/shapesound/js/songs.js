@@ -33,9 +33,8 @@ const bars=(fn,n)=>Array.from({length:n},(_,i)=>fn(i)).flat();
 
 const SONG_GROUPS=[
   {name:'简单儿歌', hint:'一听就会，第一次玩从这里开始', ids:['twinkle','tigers','birthday','jingle']},
-  {name:'复杂编曲 · 挑战', hint:'好几种乐器分声部，一页一页叠上去', ids:['epic','canon','ode','minuet','elise','night','harbor']},
-  {name:'搞怪 · 好玩', hint:'不按常理出牌，居然也挺好听', ids:['rain','cat','chip','coaster']},
-  {name:'像画一样的谱子', hint:'先是一幅画，按下播放才发现是音乐', ids:['smile','heart','waves','sunset']},
+  {name:'复杂编曲 · 挑战', hint:'好几种乐器分声部，一页一页叠上去', ids:['epic','canon','ode','minuet','elise','night']},
+  {name:'好玩 · 画出来的谱子', hint:'像老游戏机，也像一幅画：按下播放听听看', ids:['chip','kitty']},
 ];
 const SONGS=[
   // ---------- 简单儿歌（C 大调、2 个八度：行 0 = C4，7 = C5，14 = C6；贝斯颜色自动低一个八度） ----------
@@ -212,46 +211,8 @@ const SONGS=[
         ...[16,32,48].flatMap(x=>[0,1,2].flatMap(k=>songStrokes(ep(k),12,o(x)))),
         ...songStrokes([[D.C,.5]],DRUM_INK,o(32)), ...songStrokes(leadA,8,o(32)),
         ...songStrokes(leadB,8,o(48)), ...[0,1].flatMap(k=>songStrokes(P.map(c=>[CH[c][k],4]),13,o(48)))]; } },
-  { id:'harbor', title:'海边的风（原创 · 港乐摇滚抒情）', icon:'🌊', ink:4, meta:'原创 · 吉他 贝斯 鼓组 长笛 → 铜管 管风琴 · 4 页',
-    tip:'80 年代港乐摇滚抒情的编法：前奏木吉他分解和弦，主歌长笛，副歌铜管领奏、风琴铺底。<b>试试：</b>把副歌的铜管换成合唱颜色。',
-    settings:{range:3,bpm:78},
-    parts:()=>{ const o=x=>({top:21,offset:x}), D=DR(21), root={C:7,G:4,A:5,F:3,E:2};   // A = Am，E = Em
-      const pages=['CGAF','CGAF','FGEA','FGCC'];
-      const gtr=s=>[...s].flatMap(c=>{ const r=root[c]; return [r,r+4,r+7,r+9,r+7,r+4,r,r+4].map(x=>[x,.5]); });
-      const bass=s=>[...s].flatMap(c=>[[root[c],1.5],[root[c],.5],[root[c],2]]);
-      const rock=[[D.K,[0,2.5]],[D.S,[1,3]],[D.H,[0,.5,1,1.5,2,2.5,3,3.5]]].map(([r,p])=>bars(()=>hitsAt(r,p),4));
-      const intro=[[D.K,[0]],[D.H,[0,1,2,3]]].map(([r,p])=>bars(()=>hitsAt(r,p),4));
-      const verse=[[null,1],[16,.5],[16,.5],[16,1],[15,.5],[14,.5], [15,1.5],[13,.5],[11,2],
-                   [null,1],[14,.5],[14,.5],[14,1],[13,.5],[12,.5], [13,1.5],[12,.5],[10,1],[12,1]];
-      const chorus1=[[17,1.5],[16,.5],[17,1],[19,1], [18,2],[15,1],[16,1], [16,1.5],[15,.5],[16,1],[18,1], [19,3],[null,1]];
-      const chorus2=[[17,1.5],[16,.5],[17,1],[19,1], [20,1.5],[19,.5],[18,1],[15,1], [16,1.5],[15,.5],[14,2], [14,3],[null,1]];
-      const PAD={F:[10,12],G:[11,13],E:[9,11],A:[9,12],C:[9,11]}, pad=(s,k)=>[...s].map(c=>[PAD[c][k],4]);
-      return [ ...pages.flatMap((s,i)=>[...songStrokes(gtr(s),1,o(i*16)), ...songStrokes(bass(s),7,o(i*16)),
-                 ...(i?rock:intro).flatMap(d=>songStrokes(d,DRUM_INK,o(i*16)))]),
-        ...songStrokes(verse,4,o(16)),
-        ...songStrokes([[D.C,.5]],DRUM_INK,o(32)), ...songStrokes(chorus1,9,o(32)), ...songStrokes(chorus2,9,o(48)),
-        ...[2,3].flatMap(i=>[0,1].flatMap(k=>songStrokes(pad(pages[i],k),10,o(i*16))))]; } },
 
-  // ---------- 搞怪 · 好玩 ----------
-  { id:'rain', title:'下雨啦（全是点）', icon:'☔', ink:6, meta:'一根线都没有 · 2 页',
-    tip:'每个点都是一滴雨，五声音阶怎么落都好听。<b>试试：</b>闭着眼睛在空白处乱点。',
-    settings:{...PENT,bpm:84},
-    pages:()=>[7,23].map(seed=>{ const r=rng(seed), out=[];
-      for(let i=0;i<64;i++){
-        if(r()<.42){ const row=7+Math.floor(r()*9); out.push({ink:r()<.7?6:4,pts:[P2((i+.3)/64,1-row/15)]}); }
-        if(i%8===0) out.push({ink:3,pts:[P2((i+.3)/64,1-Math.floor(r()*4)/15)]});   // 低音「滴答」
-      }
-      return out; }) },
-  { id:'cat', title:'猫在键盘上散步', icon:'🐾', ink:0, meta:'随机乱走的点 · 2 页',
-    tip:'小猫一步一步走，偶尔一跳，最后一屁股坐在键盘上。<b>试试：</b>把速度拉到最快。',
-    settings:{...PENT,quant:'8',bpm:120},
-    pages:()=>[3,9].map(seed=>{ const r=rng(seed), out=[]; let row=8;
-      for(let i=0;i<31;i++){ const u=r(); if(u<.15) continue;            // 停下来舔爪子
-        if(u<.25) row+=(r()<.5?-1:1)*(5+Math.floor(r()*3));               // 跳一下
-        else row+=[-2,-1,1,2][Math.floor(r()*4)];                          // 走一步
-        row=clamp(row,1,15); out.push({ink:i%2?8:0,pts:[P2((i+.3)/32,1-row/15)]}); }
-      out.push({ink:7,pts:[P2(.982,1-12/15),P2(.982,1-3/15)]});             // 坐到键盘上：一个和弦
-      return out; }) },
+  // ---------- 好玩 · 画出来的谱子 ----------
   { id:'chip', title:'8-bit 小冒险', icon:'👾', ink:8, meta:'原创 · 像老游戏机 · 鼓伴奏 · 2 页',
     tip:'快速上下跳的音就是老游戏机的味道。<b>试试：</b>点「随机换音色」，听听像不像别的游戏。',
     settings:{bpm:150,beats:2},
@@ -261,50 +222,24 @@ const SONGS=[
       const hop=(r,n=4)=>rep([[r,.5],[r+7,.5]],n);
       const bass=[...hop(0),...hop(1),...hop(2),...hop(4),...hop(0),...hop(1),...hop(0,2),...hop(4,2),...hop(0)];
       return [...songStrokes([...A,...B,...C,...D,...A,...B,...E,...F],8), ...songStrokes(bass,7)]; } },
-  { id:'coaster', title:'过山车', icon:'🎢', ink:8, meta:'一条长长的斜线 · 1 页',
-    tip:'慢慢爬坡是一级一级往上，俯冲就是一大把音一起滑下来。<b>试试：</b>自己画一个更疯狂的。',
-    settings:{...PENT,bpm:96},
-    pages:()=>{ const track=[P2(.01,.9),P2(.26,.1),P2(.33,.86),P2(.41,.42),P2(.47,.78),
-        ...curve(t=>[.56+.06*Math.cos(t)+.05*(Math.PI/2-t)/(2*Math.PI), .52+.24*Math.sin(t)],28,Math.PI/2,Math.PI/2-2*Math.PI),
-        ...curve(t=>[.68+.31*t, .76-.16*Math.abs(Math.sin(t*Math.PI*3))*(1-t*.6)],30)];
-      return [[ {ink:8,pts:track},
-        ...[.08,.18,.37,.75,.9].map(x=>({ink:7,pts:[P2(x,.97),P2(x,.86)]})),   // 支架
-        {ink:1,pts:[P2(.26,.04)]},{ink:1,pts:[P2(.275,.04)]} ]]; } },          // 尖叫！
-
-  // ---------- 像画一样的谱子 ----------
-  { id:'smile', title:'笑脸和气球', icon:'☺', ink:3, meta:'圆圈会变成上下两条旋律 · 1 页',
-    tip:'圆圈的上半圈和下半圈同时响，就成了两个声部。<b>试试：</b>给它画上头发。',
+  { id:'kitty', title:'画一只小猫', icon:'🐱', ink:1, meta:'原创 · 一张猫脸就是一首曲子 · 1 页',
+    tip:'脸是一个大圆圈，胡子是长长的弦乐和弦，眼睛和鼻子是小小的点缀。<b>试试：</b>给它画个蝴蝶结，或者再画一只小猫。',
     settings:{...PENT,bpm:84},
-    pages:()=>[[ {ink:3,pts:ellipse(.5,.48,.17,.4,48)},
-      {ink:4,pts:ellipse(.44,.35,.018,.055,12)},{ink:4,pts:ellipse(.56,.35,.018,.055,12)},
-      {ink:1,pts:ellipse(.5,.5,.1,.2,20,.15*Math.PI,.85*Math.PI)},
-      {ink:5,pts:[P2(.39,.57)]},{ink:5,pts:[P2(.61,.57)]},
-      {ink:1,pts:ellipse(.13,.26,.055,.15,24)},{ink:7,pts:curve(t=>[.13+.015*Math.sin(t*12),.41+.45*t],14)},
-      {ink:4,pts:ellipse(.87,.3,.055,.15,24)},{ink:7,pts:curve(t=>[.87+.015*Math.sin(t*12),.45+.41*t],14)},
-      {ink:2,pts:ellipse(.25,.2,.035,.09,18)},{ink:7,pts:[P2(.25,.29),P2(.24,.6)]} ]] },
-  { id:'heart', title:'爱心', icon:'♥', ink:1, meta:'一大两小三颗心 · 1 页',
-    tip:'心形的尖儿会响成一串滑音。<b>试试：</b>在中间再画一颗小心。',
-    settings:{...PENT,bpm:80},
-    pages:()=>[[ {ink:1,pts:heart(.5,.42,.17,.4)}, {ink:5,pts:heart(.5,.45,.09,.2,40)},
-      {ink:5,pts:heart(.15,.4,.06,.15,32)}, {ink:5,pts:heart(.85,.4,.06,.15,32)},
-      ...[[.06,.15],[.3,.1],[.7,.12],[.94,.18],[.24,.75],[.78,.78]].map(([x,y])=>({ink:6,pts:[P2(x,y)]})),
-      {ink:2,pts:curve(t=>[.01+.98*t,.93-.03*Math.sin(t*Math.PI*6)],40)} ]] },
-  { id:'waves', title:'海浪', icon:'🌊', ink:4, meta:'三条波浪 · 1 页',
-    tip:'波浪一上一下，就是一段段起伏的旋律。<b>试试：</b>把其中一条换成贝斯颜色。',
-    settings:{...PENT,bpm:76},
-    pages:()=>[[ {ink:6,pts:curve(t=>[.01+.98*t,.38+.06*Math.sin(2*Math.PI*3*t+1)],48)},
-      {ink:4,pts:curve(t=>[.01+.98*t,.56+.1*Math.sin(2*Math.PI*2*t)],48)},
-      {ink:0,pts:curve(t=>[.01+.98*t,.8+.06*Math.sin(2*Math.PI*1.5*t+2)],40)},
-      ...[.125,.625].map(x=>({ink:6,pts:[P2(x,.4)]})),
-      ...[[.18,.12],[.24,.08],[.7,.14]].map(([x,y])=>({ink:7,pts:[P2(x-.015,y-.035),P2(x,y),P2(x+.015,y-.035)]})) ]] },
-  { id:'sunset', title:'山和太阳', icon:'⛰', ink:2, meta:'山、太阳、飞鸟 · 1 页',
-    tip:'山的轮廓就是旋律线，太阳是一个小圆圈和弦。<b>试试：</b>把山画得更高更尖。',
-    settings:{...PENT,bpm:84},
-    pages:()=>[[ {ink:2,pts:[[0,.8],[.08,.62],[.15,.74],[.25,.44],[.33,.62],[.4,.55],[.5,.78],[.6,.5],[.7,.66],[.78,.58],[.88,.75],[.999,.6]].map(p=>P2(...p))},
-      {ink:5,pts:curve(t=>[.01+.98*t,.9+.04*Math.sin(2*Math.PI*1.5*t)],36)},
-      {ink:1,pts:ellipse(.72,.25,.05,.12,24)},
-      ...Array.from({length:6},(_,k)=>{ const a=k/6*Math.PI*2; return {ink:1,pts:[P2(.72+.07*Math.cos(a),.25+.17*Math.sin(a)),P2(.72+.09*Math.cos(a),.25+.22*Math.sin(a))]}; }),
-      ...[[.18,.2],[.24,.14],[.3,.22],[.45,.12]].map(([x,y])=>({ink:7,pts:[P2(x-.015,y-.035),P2(x,y),P2(x+.015,y-.035)]})) ]] },
+    pages:()=>{ const L=[], R=[];
+      // 胡子：左右各三根，稍微斜一点，响起来是缓缓滑动的和弦
+      [[.6,-.04],[.66,0],[.72,.04]].forEach(([y,k])=>{ L.push({ink:5,pts:[P2(.17,y+k),P2(.37,y)]}); R.push({ink:5,pts:[P2(.63,y),P2(.83,y+k)]}); });
+      return [[
+        {ink:1,pts:ellipse(.5,.56,.2,.36,48)},                                    // 圆圆的脸
+        {ink:12,pts:[P2(.34,.34),P2(.37,.08),P2(.45,.22)]},                       // 左耳
+        {ink:12,pts:[P2(.55,.22),P2(.63,.08),P2(.66,.34)]},                       // 右耳
+        {ink:4,pts:ellipse(.43,.47,.022,.06,14)}, {ink:4,pts:ellipse(.57,.47,.022,.06,14)},   // 眼睛
+        {ink:6,pts:[P2(.43,.45)]}, {ink:6,pts:[P2(.57,.45)]},                    // 眼睛里的高光
+        {ink:2,pts:[P2(.485,.58),P2(.5,.62),P2(.515,.58)]},                       // 小鼻子
+        {ink:3,pts:curve(t=>[.44+.12*t,.68+.035*Math.abs(Math.sin(t*Math.PI*2))],16)}, // ω 形的嘴
+        ...L, ...R,
+        ...[[.08,.15],[.2,.08],[.82,.1],[.93,.2],[.1,.85],[.9,.82]].map(([x,y])=>({ink:6,pts:[P2(x,y)]})),  // 星星
+        {ink:7,pts:curve(t=>[.01+.98*t,.97-.02*Math.sin(t*Math.PI*4)],30)}       // 地板（贝斯）
+      ]]; } },
 ];
 const songById=id=>SONGS.find(x=>x.id===id);
 function songPages(song){

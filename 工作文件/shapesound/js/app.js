@@ -10,7 +10,10 @@ function renderSwatches(){
 }
 function setInk(i){ S.ink=i; setTool('draw'); autosave(); ensureAudio(); const R=rows(); voice(ctx,chain.input,i,freqOf(R[Math.floor(R.length/2)]),ctx.currentTime+.01,.3,.6); }  // 换乐器时试听一声
 function setTool(t){ tool=t; cv.style.cursor=t==='erase'?'cell':'crosshair'; renderSwatches(); }
-function toggleGrid(){ S.grid=!S.grid; $('tGrid').classList.toggle('on',S.grid); markTried('gridTried'); autosave();
+// 全局偏好：网格开关和背景对所有谱子都生效（不跟着某一首谱走），存在浏览器里
+const prefs=(()=>{ try{ return JSON.parse(localStorage.getItem('xingsheng.prefs'))||{}; }catch(e){ return {}; } })();
+function setPref(k,v){ prefs[k]=v; try{ localStorage.setItem('xingsheng.prefs',JSON.stringify(prefs)); }catch(e){} }
+function toggleGrid(){ S.grid=!S.grid; setPref('grid',S.grid); $('tGrid').classList.toggle('on',S.grid); markTried('gridTried'); autosave();
   if(updateGridPulse()===false && $('tShuffle').classList.contains('pulse')) toast('再试试闪烁的「随机换音色」：每条线随机换一种乐器',3500); }
 // 新手引导，一次只闪一个按钮：先是「音符网格」，点过之后轮到「随机换音色」（画纸上有线时才闪），各自点过一次就不再闪
 const tried=k=>{ try{ return !!localStorage.getItem('xingsheng.'+k); }catch(e){ return true; } };
@@ -29,14 +32,22 @@ $('tShuffle').onclick=()=>{ if(!strokes.length) return toast('先画几笔再换
   toast('每条线都换了一种乐器 · 不喜欢按 Ctrl+Z 换回来',2600); };
 $('tPalette').onclick=()=>{ S.palette=(S.palette+1)%PALETTES.length; renderSwatches(); castMask=-1; if(S.mode===3) buildCast(); renderStrip(); autosave(); toast(['明亮','国色','霓虹'][S.palette]+'配色'); };
 $('tGrid').onclick=toggleGrid;
-$('tBg').onclick=()=>{ const next=PAPERS[(PAPERS.indexOf(S.paper)+1)%PAPERS.length]; if(next==='photo'){ $('photoFile').click(); return; } setPaper(next); toast('背景：'+PAPER_NAMES[next]); };
-$('tBg').oncontextmenu=e=>{ e.preventDefault(); $('photoFile').click(); };
+// 换背景：点一下在默认壁纸（纸 / 天空 / 夜）之间切换；长按（或右键）才去选自己的图片
+const BASE_PAPERS=PAPERS.filter(p=>p!=='photo');
+let bgTimer=0, bgLong=false;
+function pickPhoto(){ clearTimeout(bgTimer); bgLong=true; $('tBg').classList.remove('holding'); $('photoFile').click(); }
+$('tBg').addEventListener('pointerdown',e=>{ if(e.button>0) return; bgLong=false; clearTimeout(bgTimer);
+  $('tBg').classList.add('holding'); bgTimer=setTimeout(pickPhoto,550); });
+['pointerup','pointerleave','pointercancel'].forEach(ev=>$('tBg').addEventListener(ev,()=>{ clearTimeout(bgTimer); $('tBg').classList.remove('holding'); }));
+$('tBg').onclick=()=>{ if(bgLong){ bgLong=false; return; }
+  const i=BASE_PAPERS.indexOf(S.paper), next=BASE_PAPERS[(i+1)%BASE_PAPERS.length];   // 照片背景时点一下回到「纸」
+  setPaper(next); toast('背景：'+PAPER_NAMES[next]+'（长按可以换成自己的图片）'); };
+$('tBg').oncontextmenu=e=>{ e.preventDefault(); if(!bgLong) pickPhoto(); };
 function setPaper(p){
-  S.paper=p; document.body.dataset.paper=p==='photo'?'paper':p; $('stage').classList.toggle('photo',p==='photo');
+  S.paper=p; setPref('paper',p); document.body.dataset.paper=p==='photo'?'paper':p; $('stage').classList.toggle('photo',p==='photo');
   if(p!=='photo') $('stage').style.backgroundImage=''; readColors(); renderStrip(); autosave();
 }
-$('photoFile').onchange=e=>{ const f=e.target.files[0]; if(f){ $('stage').style.backgroundImage=`url(${URL.createObjectURL(f)})`; setPaper('photo'); toast('背景：照片'); } else setPaper('paper'); e.target.value=''; };
-$('photoFile').addEventListener('cancel',()=>setPaper('paper'));
+$('photoFile').onchange=e=>{ const f=e.target.files[0]; if(f){ $('stage').style.backgroundImage=`url(${URL.createObjectURL(f)})`; setPaper('photo'); toast('背景：你的图片'); } e.target.value=''; };   // 取消选择：保持原来的背景
 
 // ---------------- 保存 / 打开 / 自动保存 ----------------
 function serialize(){
@@ -54,6 +65,8 @@ function loadInner(obj){
     tr=[{pages:old.filter((l,i)=>i===0||(l&&l.length)).map(l=>({strokes:l||[],bars:1})),pageIndex:0}];
   }
   Object.assign(S,obj.settings||{});
+  if(typeof prefs.grid==='boolean') S.grid=prefs.grid;                       // 网格、背景用全局设置
+  if(prefs.paper) S.paper=(prefs.paper==='photo'&&!$('stage').style.backgroundImage)?'paper':prefs.paper;
   if(obj.settings && obj.settings.tune && !('cents' in obj.settings)) S.cents=clamp(Math.round(1200*Math.log2(obj.settings.tune/440)),-50,50);
   if(!SCALES[S.scale]) S.scale='majPent'; if(!QUANT[S.quant]) S.quant='8t'; if(!SWING[S.swing]) S.swing='off';
   S.ink=clamp(S.ink|0,0,NINK-1); S.beats=(S.beats|0)&7; S.palette=clamp(S.palette|0,0,PALETTES.length-1); S.mode=[1,2,3].includes(S.mode)?S.mode:1;
