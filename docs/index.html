@@ -479,8 +479,8 @@ function noteName(m){
   return (flat ? NAMES_FLAT : NAMES_SHARP)[((m%12)+12)%12] + (Math.floor(m/12)-1);
 }
 const freqOf = m => 440 * Math.pow(2, (m-69)/12 + S.cents/1200);
-// 时间结构：一小节 = 8 拍（拍长 60/BPM 秒）；宽屏一张纸放 2 小节（16 拍），手机放 1 小节。120 BPM 时一圈 8 秒。
-const PULSES = 8, BARS = window.innerWidth >= 700 ? 2 : 1;
+// 一页固定 2 小节，每小节 8 拍。画纸宽度只影响显示，120 BPM 时一页始终播放 8 秒。
+const PULSES = 8, BARS = 2;
 const stepsPerBeat = () => QUANT[S.quant].n / 4;            // 1/4→1, 1/8→2, 1/8 三连→3, 1/16→4, 1/16 三连→6, 1/32→8
 const stepsPerBar  = () => stepsPerBeat() * PULSES;
 const stepsPerLoop = () => stepsPerBar() * BARS;
