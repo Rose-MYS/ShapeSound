@@ -146,7 +146,7 @@ $('libImport').onclick=()=>$('openFile').click();
 
 // ---------------- 启动 ----------------
 (function init(){
-  buildPiano(); readColors(); renderPlay();
+  buildPiano(); readColors(); renderPlay(); setLoopOne(!!prefs.loopOne,true);
   let ok=false;
   try{ const s=localStorage.getItem('xingsheng.v3')||localStorage.getItem('xingsheng.v2'); if(s){ load(JSON.parse(s)); ok=true; } }catch(e){}
   restoreCurrent();                       // 恢复「正在编辑哪个作品」，并把旧版的备份搬进作品库

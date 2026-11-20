@@ -40,10 +40,13 @@ const S = { key:0, scale:'majPent', range:3, octave:0, cents:0, quant:'8t', swin
 // Pages：时间线 → 页 → 线条。一页 = 一圈循环的画；bars = 这一页占几个小节（与原作一致，网页版一小节即一圈）
 const newTrack = () => ({ pages:[{strokes:[], bars:1}], pageIndex:0, played:0, collapsed:false });
 let tracks = [newTrack()], trackIndex = 0, timelineOn = false;
+// 单页循环：开着时只循环眼前这一页；关掉时按 Pages 的顺序一页一页往下播（和 Pages 面板开不开无关）
+let loopOne = false;
 let strokes = tracks[0].pages[0].strokes;
 function syncStrokes(){ const t=tracks[trackIndex]; t.pageIndex=clamp(t.pageIndex,0,t.pages.length-1); strokes=t.pages[t.pageIndex].strokes; }
 // 正在发声的线：时间线打开时是每条时间线当前那一页叠在一起；关闭时只有眼前这一页
-const playingLists = () => timelineOn ? tracks.map(t=>t.pages[t.pageIndex].strokes) : [strokes];
+// 正在发声的线：每条时间线当前那一页叠在一起（单页循环时也一样，只是不翻页）
+const playingLists = () => tracks.map(t=>t.pages[t.pageIndex].strokes);
 let tool = 'draw';
 let undoStack = [], redoStack = [];
 
@@ -330,7 +333,7 @@ function scheduleStep(step,time){
 }
 let loopStarted=false;
 function tick(){ while(nextTime<ctx.currentTime+.12){
-  if(curStep===0 && loopStarted && timelineOn) advanceTimeline();
+  if(curStep===0 && loopStarted && !loopOne) advanceTimeline();
   loopStarted=true; scheduleStep(curStep,nextTime); nextTime+=stepDur(); curStep=(curStep+1)%stepsPerLoop(); } }
 // 一圈结束：每条时间线看当前页放够了几遍，够了就翻到下一页（最后一页之后回到第一页）
 function advanceTimeline(){

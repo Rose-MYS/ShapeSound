@@ -296,6 +296,7 @@ body.noinst #inst{display:none}
 
   <div id="bar">
     <button class="ib" id="pagesBtn" data-tip="Pages：把几页串成一条时间线"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M9 5v14M15 5v14"/></svg></button>
+    <button class="ib" id="loopBtn" data-tip="单页循环：开着时只循环眼前这一页；关掉时一页放完接着放下一页（和 Pages 面板开不开无关）"><svg viewBox="0 0 24 24"><path d="M17 2l3 3-3 3"/><path d="M4 11V9a4 4 0 014-4h12"/><path d="M7 22l-3-3 3-3"/><path d="M20 13v2a4 4 0 01-4 4H4"/><path d="M11 10h1.5v5"/></svg></button>
     <div class="vsep"></div>
     <div class="toggle-row"><button class="switch on" id="instSw" title="显示/隐藏乐器面板"></button>乐器面板</div>
     <div class="vsep"></div>
@@ -334,7 +335,7 @@ body.noinst #inst{display:none}
     不知道从哪开始？点左边的 <b>♪ 示例曲</b>，听一首再改着玩。<br>
     有现成的谱子？点 <b>⇪ 导入谱子</b>：粘贴简谱，或选 MusicXML / MIDI 文件，自动画成线条；也能选一张照片，把轮廓描成会响的线条。<br>
     <b>1 / 2 / 3</b> 是显示模式：画线、像素（格子会随播放头亮起）、舞台（每种乐器一个格子配照片，手机宽度才出现）。<br>
-    最左边的 <b>Pages</b> 打开时间线：每页一张画，点「N 小节」改这一页放几个小节，＋ 新页、复制、删除；还能叠加多条时间线一起播。<br>
+    最左边的 <b>Pages</b> 打开时间线（只管显示），旁边的 <b>单页循环</b> 按钮决定是只循环眼前这一页，还是一页放完接着放下一页；Pages 里每页一张画，点「N 小节」改这一页放几个小节，＋ 新页、复制、删除；还能叠加多条时间线一起播。<br>
     「保存」把作品存进「我的作品」，在那里可以随时切换、改名、删除，或导出成 .json 文件（<kbd>Ctrl</kbd>+<kbd>S</kbd> 快速保存）。
   </div>
 </div></div>
@@ -433,10 +434,13 @@ const S = { key:0, scale:'majPent', range:3, octave:0, cents:0, quant:'8t', swin
 // Pages：时间线 → 页 → 线条。一页 = 一圈循环的画；bars = 这一页占几个小节（与原作一致，网页版一小节即一圈）
 const newTrack = () => ({ pages:[{strokes:[], bars:1}], pageIndex:0, played:0, collapsed:false });
 let tracks = [newTrack()], trackIndex = 0, timelineOn = false;
+// 单页循环：开着时只循环眼前这一页；关掉时按 Pages 的顺序一页一页往下播（和 Pages 面板开不开无关）
+let loopOne = false;
 let strokes = tracks[0].pages[0].strokes;
 function syncStrokes(){ const t=tracks[trackIndex]; t.pageIndex=clamp(t.pageIndex,0,t.pages.length-1); strokes=t.pages[t.pageIndex].strokes; }
 // 正在发声的线：时间线打开时是每条时间线当前那一页叠在一起；关闭时只有眼前这一页
-const playingLists = () => timelineOn ? tracks.map(t=>t.pages[t.pageIndex].strokes) : [strokes];
+// 正在发声的线：每条时间线当前那一页叠在一起（单页循环时也一样，只是不翻页）
+const playingLists = () => tracks.map(t=>t.pages[t.pageIndex].strokes);
 let tool = 'draw';
 let undoStack = [], redoStack = [];
 
@@ -723,7 +727,7 @@ function scheduleStep(step,time){
 }
 let loopStarted=false;
 function tick(){ while(nextTime<ctx.currentTime+.12){
-  if(curStep===0 && loopStarted && timelineOn) advanceTimeline();
+  if(curStep===0 && loopStarted && !loopOne) advanceTimeline();
   loopStarted=true; scheduleStep(curStep,nextTime); nextTime+=stepDur(); curStep=(curStep+1)%stepsPerLoop(); } }
 // 一圈结束：每条时间线看当前页放够了几遍，够了就翻到下一页（最后一页之后回到第一页）
 function advanceTimeline(){
@@ -806,7 +810,7 @@ function draw(){
 
   // 线条（时间线打开时，其他时间线正在播的页淡淡地显示在下面）
   g.lineCap='round'; g.lineJoin='round';
-  const inkLists=[[strokes,1]]; if(timelineOn) tracks.forEach((t,k)=>{ if(k!==trackIndex) inkLists.unshift([t.pages[t.pageIndex].strokes,.28]); });
+  const inkLists=[[strokes,1]]; if(tracks.length>1) tracks.forEach((t,k)=>{ if(k!==trackIndex) inkLists.unshift([t.pages[t.pageIndex].strokes,.28]); });
   for(const [list,fade] of inkLists) for(const s of list){
     g.globalAlpha=fade;
     const col=inkColor(s.ink); g.strokeStyle=col; g.fillStyle=col; g.lineWidth=3.5;
@@ -1124,6 +1128,11 @@ let thumbAt=0;
 function refreshThumb(){ const c=$('strip').querySelector('.trk.on .pg.on canvas'); if(c) thumb(c,strokes,pageBars(tracks[trackIndex].pages[tracks[trackIndex].pageIndex])); }
 function setTimeline(on){ timelineOn=on; document.body.classList.toggle('pages-open',on); $('pagesBtn').classList.toggle('on',on); computeEvents(); renderStrip(); }
 $('pagesBtn').onclick=()=>setTimeline(!timelineOn);
+// 单页循环按钮：全局设置，换到哪首谱都保持
+function setLoopOne(on,quiet){ loopOne=on; setPref('loopOne',on); $('loopBtn').classList.toggle('on',on);
+  if(!quiet){ const many=tracks.some(t=>t.pages.length>1);
+    toast(on?'单页循环：只循环眼前这一页':(many?'顺序播放：一页放完接着放下一页':'顺序播放：现在只有一页，加了新页就会一页一页往下播'),2400); } }
+$('loopBtn').onclick=()=>setLoopOne(!loopOne);
 </script>
 <script>
 /* ===== js/app.js ===== */
@@ -1763,7 +1772,7 @@ $('libImport').onclick=()=>$('openFile').click();
 
 // ---------------- 启动 ----------------
 (function init(){
-  buildPiano(); readColors(); renderPlay();
+  buildPiano(); readColors(); renderPlay(); setLoopOne(!!prefs.loopOne,true);
   let ok=false;
   try{ const s=localStorage.getItem('xingsheng.v3')||localStorage.getItem('xingsheng.v2'); if(s){ load(JSON.parse(s)); ok=true; } }catch(e){}
   restoreCurrent();                       // 恢复「正在编辑哪个作品」，并把旧版的备份搬进作品库

@@ -60,7 +60,7 @@ function draw(){
 
   // 线条（时间线打开时，其他时间线正在播的页淡淡地显示在下面）
   g.lineCap='round'; g.lineJoin='round';
-  const inkLists=[[strokes,1]]; if(timelineOn) tracks.forEach((t,k)=>{ if(k!==trackIndex) inkLists.unshift([t.pages[t.pageIndex].strokes,.28]); });
+  const inkLists=[[strokes,1]]; if(tracks.length>1) tracks.forEach((t,k)=>{ if(k!==trackIndex) inkLists.unshift([t.pages[t.pageIndex].strokes,.28]); });
   for(const [list,fade] of inkLists) for(const s of list){
     g.globalAlpha=fade;
     const col=inkColor(s.ink); g.strokeStyle=col; g.fillStyle=col; g.lineWidth=3.5;
@@ -378,4 +378,9 @@ let thumbAt=0;
 function refreshThumb(){ const c=$('strip').querySelector('.trk.on .pg.on canvas'); if(c) thumb(c,strokes,pageBars(tracks[trackIndex].pages[tracks[trackIndex].pageIndex])); }
 function setTimeline(on){ timelineOn=on; document.body.classList.toggle('pages-open',on); $('pagesBtn').classList.toggle('on',on); computeEvents(); renderStrip(); }
 $('pagesBtn').onclick=()=>setTimeline(!timelineOn);
+// 单页循环按钮：全局设置，换到哪首谱都保持
+function setLoopOne(on,quiet){ loopOne=on; setPref('loopOne',on); $('loopBtn').classList.toggle('on',on);
+  if(!quiet){ const many=tracks.some(t=>t.pages.length>1);
+    toast(on?'单页循环：只循环眼前这一页':(many?'顺序播放：一页放完接着放下一页':'顺序播放：现在只有一页，加了新页就会一页一页往下播'),2400); } }
+$('loopBtn').onclick=()=>setLoopOne(!loopOne);
 
