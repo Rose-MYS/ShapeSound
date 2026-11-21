@@ -197,22 +197,80 @@ const SONGS=[
       const LA=[[5,1],[12,1],[17,1],[null,3]], LE=[[0,1],[12,1],[16,1],[null,3]], R6=[[null,6]];
       return [...songStrokes([...b1,...b2,...b3,...b4,...b1,...b2,...b7,...b8],0,o),
               ...songStrokes([...R6,...LA,...LE,...LA,...R6,...LA,...LE,...LA],3,o)]; } },
-  { id:'night', title:'夜跑（原创电子）', icon:'🌃', ink:8, meta:'原创 · 鼓组 贝斯 电钢琴 8-bit 合唱 · 4 页',
-    tip:'一页加一层：鼓和贝斯 → 电钢琴和弦 → 主旋律 → 合唱铺底和变奏。<b>试试：</b>鼓组颜色画的点，越低越是底鼓、越高越是镲，自己加几下。',
-    settings:{range:3,bpm:118},
-    parts:()=>{ const o=x=>({top:21,offset:x}), D=DR(21), P=[...'AFCG'];        // Am F C G
-      const root={A:5,F:3,C:7,G:4}, EP={A:[12,14,16],F:[10,12,14],C:[11,14,16],G:[11,13,15]}, CH={A:[9,12],F:[10,12],C:[9,11],G:[8,11]};
-      const bass=P.flatMap(c=>{ const r=root[c]; return [...rep([[r,.5]],6),[r+7,.5],[r+7,.5]]; });
-      const drums=[[D.K,[0,1,2,3]],[D.S,[1,3]],[D.H,[.5,1.5,2.5,3.5]]].map(([r,p])=>bars(()=>hitsAt(r,p),4));
-      const ep=k=>P.flatMap(c=>[[EP[c][k],1.5],[null,1],[EP[c][k],1],[null,.5]]);
-      const leadA=[[16,.5],[16,.5],[19,1],[16,.5],[14,.5],[12,1], [14,.5],[15,.5],[17,1],[15,1],[14,1],
-                   [14,.5],[16,.5],[18,1],[16,.5],[14,.5],[16,1], [15,1.5],[13,.5],[11,1],[null,1]];
-      const leadB=[[19,.5],[18,.5],[16,1],[19,.5],[21,.5],[19,1], [17,.5],[16,.5],[14,1],[17,1],[19,1],
-                   [18,.5],[16,.5],[14,.5],[16,.5],[18,1],[21,1], [20,1],[18,1],[15,1],[13,1]];
-      return [ ...[0,16,32,48].flatMap(x=>[...songStrokes(bass,7,o(x)), ...drums.flatMap(d=>songStrokes(d,DRUM_INK,o(x)))]),
-        ...[16,32,48].flatMap(x=>[0,1,2].flatMap(k=>songStrokes(ep(k),12,o(x)))),
-        ...songStrokes([[D.C,.5]],DRUM_INK,o(32)), ...songStrokes(leadA,8,o(32)),
-        ...songStrokes(leadB,8,o(48)), ...[0,1].flatMap(k=>songStrokes(P.map(c=>[CH[c][k],4]),13,o(48)))]; } },
+  { id:'night', title:'夜跑（原创电子）', icon:'🌃', ink:8, meta:'原创 · 13 种乐器 · 8-bit 和电吉他齐奏主旋律 · 8 页 · 约 1 分钟',
+    tip:'前奏 → 主歌 → 主歌加花 → 推进 → 高潮 → 间奏 → 最后的高潮 → 尾声，一页一段。高潮里 8-bit 和电吉他一起弹主旋律，铜管在下面配三度。<b>试试：</b>打开网格和 Pages，看看推进那页的军鼓怎么越敲越密。',
+    settings:{key:4,scale:'minor',range:3,quant:'16',bpm:124},
+    // E 自然小调、3 个八度：行 0 = E3，7 = E4，14 = E5，21 = E6。量化 1/16（一拍 4 步），一页 4 小节（16 拍）
+    parts:()=>{
+      const T=21, D=DR(T), out=[];
+      const put=(pg,...list)=>list.forEach(([notes,ink])=>out.push(...songStrokes(notes,ink,{spb:4,top:T,offset:pg*16})));
+      const MAIN=['i','VI','III','VII'], BUILD=['VI','VII','VI','VII'], BRK=['VI','III','VII','i'];   // Em C G D / C D C D / C G D Em
+      const CH={i:[7,9,11],VI:[5,7,9],III:[9,11,13],VII:[6,8,10]}, ROOT={i:7,VI:5,III:2,VII:6};
+      const per=(fn,prog=MAIN)=>prog.flatMap(fn);
+      const up=(n,k)=>n.map(([r,d])=>[r===null?null:r+k,d]);
+      const pad=(k,prog=MAIN,sh=0)=>per(c=>[[CH[c][k]+sh,4]],prog);
+      const arp16=(prog=MAIN,sh=0)=>per(c=>{ const [a,b,e]=CH[c]; return rep([[a+sh,.25],[b+sh,.25],[e+sh,.25],[a+7+sh,.25]],4); },prog);
+      const arp8=(prog=MAIN)=>per(c=>{ const [a,b,e]=CH[c]; return [a,e,a+7,e,b+7,e,a+7,e].map(r=>[r,.5]); },prog);
+      const stab=(k,prog=MAIN)=>per(c=>rep([[null,.5],[CH[c][k]+7,.25],[null,.25]],4),prog);   // 反拍和弦
+      const bassOff=(prog=MAIN)=>per(c=>rep([[null,.5],[ROOT[c],.5]],4),prog);                  // 反拍贝斯，像在「呼吸」
+      const bassDrop=(prog=MAIN)=>per(c=>{ const r=ROOT[c]; return [[r,.75],[r,.75],[r,.5],[r+7,.5],[r,.5],[r+7,.5],[r,.5]]; },prog);
+      const dr=(row,pos,dur=.25)=>bars(i=>hitsAt(row,typeof pos==='function'?pos(i):pos,4,dur),4);
+      const X16=Array.from({length:16},(_,i)=>i/4), X8=Array.from({length:8},(_,i)=>i/2), OFF=[.5,1.5,2.5,3.5];
+      const crash=[[D.C,.25]];
+      const fill=dr(D.T,i=>i===3?[3,3.25,3.5,3.75]:[]);
+      // 主歌旋律（原创）和第二遍的变化
+      const leadA=[[11,.5],[11,.5],[14,.75],[11,.25],[null,.5],[9,.5],[11,1],
+                   [12,.5],[11,.5],[9,.5],[7,.5],[9,1.5],[null,.5],
+                   [9,.5],[9,.5],[13,.75],[11,.25],[null,.5],[11,.5],[13,.5],[14,.5],
+                   [13,1],[12,.5],[10,.5],[8,1.5],[null,.5]];
+      const leadA2=[...leadA.slice(0,13),
+                   [9,.5],[11,.5],[13,.5],[16,.5],[14,1],[13,.5],[11,.5],
+                   [10,.5],[11,.5],[13,1],[12,.75],[10,.25],[13,1]];
+      const counter=[[16,2],[14,2],[16,2],[17,2],[18,2],[16,2],[15,4]];
+      // 副歌主题：附点十六分的切分，一小节一个和弦琶音
+      const hook=[[14,.75],[14,.75],[16,.5],[18,.75],[16,.75],[14,.5],
+                  [12,.75],[12,.75],[14,.5],[16,.75],[14,.75],[12,.5],
+                  [11,.75],[11,.75],[13,.5],[16,.75],[18,.75],[20,.5],
+                  [19,1],[17,.5],[15,.5],[13,1],[15,.5],[17,.5]];
+      const hookEnd=[...hook.slice(0,18),[17,.75],[18,.75],[20,.5],[21,2]];
+      const brkMel=[[16,3],[14,1],[13,3],[11,1],[12,2],[13,1],[15,1],[14,4]];
+      const sparkle=(seed,n)=>{ const r=rng(seed), hi=[14,16,18,19,21], pos=new Set();
+        while(pos.size<n) pos.add(Math.floor(r()*64)/4);
+        return [...pos].sort((a,b)=>a-b).flatMap((p,i,arr)=>{ const prev=i?arr[i-1]+.25:0; return [...(p>prev?[[null,p-prev]]:[]),[hi[Math.floor(r()*hi.length)],.25]]; }); };
+      const climb=bars(i=>rep([[[14,15,16,18][i],.25]],16),4);          // 每小节高一级的十六分连音
+      const run=(from,to,beats,start=0)=>{ const n=beats*4; return [[null,start],...Array.from({length:n},(_,i)=>[Math.round(from+(to-from)*i/(n-1)),.25])].filter(x=>x[0]!==null||x[1]>0); };
+
+      // 第 1 页 · 前奏：8-bit 分解和弦、合唱铺底，后两小节底鼓进来，最后一拍军鼓滚奏
+      put(0,[arp8(),8],[pad(0),13],[pad(2),13],[sparkle(7,6),6],
+            [dr(D.H,OFF),DRUM_INK],[dr(D.K,i=>i>=2?[0,1,2,3]:[]),DRUM_INK],[dr(D.S,i=>i===3?[3,3.25,3.5,3.75]:[]),DRUM_INK]);
+      // 第 2 页 · 主歌：四拍底鼓、反拍贝斯和电钢琴，8-bit 唱主旋律
+      put(1,[leadA,8],[bassOff(),7],[stab(0),12],[stab(1),12],[stab(2),12],[pad(0),13],
+            [crash,DRUM_INK],[dr(D.K,[0,1,2,3]),DRUM_INK],[dr(D.S,[1,3]),DRUM_INK],[dr(D.O,OFF),DRUM_INK]);
+      // 第 3 页 · 主歌加花：拨弦十六分琶音、长笛对位、镲变成十六分
+      put(2,[leadA2,8],[counter,4],[arp16(),1],[bassOff(),7],[stab(0),12],[stab(1),12],[stab(2),12],[pad(0),13],[pad(2),13],
+            [crash,DRUM_INK],[dr(D.K,[0,1,2,3]),DRUM_INK],[dr(D.S,[1,3]),DRUM_INK],[dr(D.H,X16),DRUM_INK],[dr(D.O,OFF),DRUM_INK],[fill,DRUM_INK]);
+      // 第 4 页 · 推进：C → D 来回，军鼓四分 → 八分 → 十六分，8-bit 一小节高一级，弦乐和合唱一起往上走
+      put(3,[climb,8],[pad(0,BUILD),5],[pad(1,BUILD),5],[pad(2,BUILD),5],[[[9,4],[10,4],[11,4],[13,4]],13],
+            [per(c=>rep([[ROOT[c],.5]],8),BUILD),7],[arp16(BUILD),1],
+            [dr(D.K,i=>i<3?[0,1,2,3]:[0]),DRUM_INK],[dr(D.S,i=>[[0,1,2,3],X8,X16,X16][i]),DRUM_INK],[dr(D.T,i=>i===3?X16.slice(8):[]),DRUM_INK]);
+      // 第 5 页 · 高潮：8-bit 和电吉他（低八度）齐奏副歌，弦乐三层铺底，滚动的贝斯，整套鼓
+      put(4,[hook,8],[up(hook,-7),15],[pad(0),5],[pad(1),5],[pad(2),5],[arp16(),1],[bassDrop(),7],[stab(0),12],[stab(2),12],
+            [crash,DRUM_INK],[dr(D.K,[0,1,2,3]),DRUM_INK],[dr(D.S,[1,3]),DRUM_INK],[dr(D.H,X16),DRUM_INK],[dr(D.O,OFF),DRUM_INK]);
+      // 第 6 页 · 间奏：鼓停下来，钢琴分解和弦，长笛慢慢唱，最后一小节军鼓和 8-bit 冲回高潮
+      put(5,[per(c=>{ const [a,b,e]=CH[c]; return [a,e,a+7,b+7,e+7,b+7,a+7,e].map(r=>[r,.5]); },BRK),0],
+            [per(c=>[[ROOT[c],4]],BRK),0],[brkMel,4],[pad(0,BRK),13],[pad(2,BRK),13],[sparkle(23,8),6],
+            [run(7,21,4,12),8],[dr(D.H,i=>i<3?X8:[]),DRUM_INK],[dr(D.S,i=>i===3?X16:[]),DRUM_INK]);
+      // 第 7 页 · 最后的高潮：副歌再来一遍，铜管配三度，马林巴、风铃加进来，最后一小节通鼓过门
+      put(6,[hookEnd,8],[up(hookEnd,-7),15],[up(hookEnd,-2),9],[pad(0),5],[pad(1),5],[pad(2),5],[pad(0,MAIN,7),13],
+            [arp16(),1],[arp16(MAIN,7).map(([r,d])=>[r>T?r-7:r,d]),3],[bassDrop(),7],[stab(0),12],[stab(1),12],[stab(2),12],[sparkle(41,10),6],
+            [crash,DRUM_INK],[dr(D.K,i=>i<3?[0,1,2,2.75,3]:[0,1,2]),DRUM_INK],[dr(D.S,i=>i<3?[1,3]:[1]),DRUM_INK],
+            [dr(D.H,i=>i<3?X16:X16.slice(0,8)),DRUM_INK],[dr(D.O,OFF),DRUM_INK],[dr(D.T,i=>i===3?X16.slice(8):[]),DRUM_INK]);
+      // 第 8 页 · 尾声：8-bit 分解和弦回来（和前奏呼应），乐器一层层退下，结束在一个大的 E 小调和弦上
+      put(7,[[...arp8().slice(0,24),[14,4]],8],[[[7,12],[0,4]],7],[pad(0),13],[pad(2),13],
+            [[[null,12],[7,4]],5],[[[null,12],[9,4]],5],[[[null,12],[11,4]],5],[[[null,12],[14,4]],15],
+            [[[null,12],...[0,2,4,7,9,11,14].map(r=>[r,.25]),[16,2.25]],0],
+            [dr(D.K,i=>i<3?[0,1,2,3]:[0]),DRUM_INK],[dr(D.H,i=>i<3?OFF:[]),DRUM_INK],[[[null,12],...crash],DRUM_INK]);
+      return out; } },
 
   // ---------- 好玩 ----------
   { id:'chip', title:'8-bit 小冒险', icon:'👾', ink:8, meta:'原创 · 像老游戏机 · 鼓伴奏 · 2 页',
