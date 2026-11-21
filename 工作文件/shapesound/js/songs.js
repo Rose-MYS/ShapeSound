@@ -35,7 +35,7 @@ const bars=(fn,n)=>Array.from({length:n},(_,i)=>fn(i)).flat();
 
 const SONG_GROUPS=[
   {name:'简单儿歌', hint:'一听就会，第一次玩从这里开始', ids:['twinkle','tigers','birthday','jingle']},
-  {name:'复杂编曲 · 挑战', hint:'好几种乐器分声部，一页一页叠上去', ids:['epic','canon','ode','minuet','elise','night']},
+  {name:'复杂编曲 · 挑战', hint:'好几种乐器分声部，一页一页叠上去', ids:['epic','canon','ode','night']},
   {name:'好玩', hint:'像老游戏机，也像一幅画：按下播放听听看', ids:['chip','kitty','photoWork']},
 ];
 const SONGS=[
@@ -246,30 +246,6 @@ const SONGS=[
             [crash,DRUM_INK],[dr(D.K,i=>i<3?[0,2]:[0,2,3]),DRUM_INK],[dr(D.S,i=>i<3?[1,3]:[1,1.75]),DRUM_INK],
             [dr(D.H,i=>i<3?X8:X8.slice(0,6)),DRUM_INK],[[[null,14],[D.C,.25]],DRUM_INK]);
       return out; } },
-  { id:'minuet', title:'小步舞曲', icon:'💃', ink:1, meta:'巴赫 · 三拍子 · 拨弦 竖琴 贝斯 → 长笛 管风琴 · 4 页',
-    tip:'右手旋律、左手分解和弦、低音三层叠在一起；后两页长笛领奏，拨弦在下面配三度。<b>试试：</b>把管风琴那条长线删掉，对比一下。',
-    settings:{key:7,range:3,quant:'8t',bpm:150},
-    // G 大调：行 0 = G3，7 = G4，14 = G5。时值单位 = 步（一拍 3 步），四分音符 4 步，一小节 12 步，一页 4 小节
-    parts:()=>{ const o=x=>({spb:3,mul:1,top:21,offset:x});
-      const b=[[[11,4],[7,2],[8,2],[9,2],[10,2]], [[11,4],[7,4],[7,4]], [[12,4],[10,2],[11,2],[12,2],[13,2]], [[14,4],[7,4],[7,4]],
-               [[10,4],[11,2],[10,2],[9,2],[8,2]], [[9,4],[10,2],[9,2],[8,2],[7,2]], [[6,4],[7,2],[8,2],[9,2],[7,2]], [[8,12]]];
-      const melA=b.flat(), melB=[...b.slice(0,6).flat(),[8,4],[9,2],[8,2],[7,2],[6,2],[7,12]];
-      const R={G:0,C:3,A:1,D:4}, chA='GGCGAGDD', chB='GGCGAGDG';
-      const bassOf=s=>[...s].map(c=>[R[c],12]), harpOf=s=>[...s].flatMap(c=>[0,2,4].map(k=>[R[c]+k,4]));
-      return [ ...songStrokes(melA,1,o(0)), ...songStrokes(bassOf(chA),7,o(0)), ...songStrokes(harpOf(chA),11,o(0)),
-        ...songStrokes(melB,4,o(96)), ...songStrokes(melB.map(([r,d])=>[r-2,d]),1,o(96)),
-        ...songStrokes(bassOf(chB),7,o(96)), ...songStrokes(harpOf(chB),11,o(96)), ...songStrokes([...chB].map(c=>[R[c]+7,12]),10,o(96))]; } },
-  { id:'elise', title:'致爱丽丝', icon:'🎹', ink:0, meta:'贝多芬 · 半音阶 · 十六分音符 · 双手 · 1 页',
-    tip:'开头那串 E–D♯ 来回跳，要用到「半音阶」。<b>试试：</b>打开网格，找找哪两行是 E 和 D♯。',
-    settings:{key:4,scale:'chromatic',range:3,octave:-1,quant:'8t',bpm:140},
-    // 半音阶、3 个八度、低一个八度：行 0 = E2 … 36 = E5。时值单位 = 十六分音符（1 步），一小节（3/8）6 步，一页 8 小节
-    parts:()=>{ const o={spb:3,mul:1,top:36};
-      const b1=[[36,1],[35,1],[36,1],[31,1],[34,1],[32,1]], b2=[[29,2],[null,1],[20,1],[24,1],[29,1]],
-            b3=[[31,2],[null,1],[24,1],[28,1],[31,1]], b4=[[32,2],[null,1],[24,1],[36,1],[35,1]],
-            b7=[[31,2],[null,1],[24,1],[32,1],[31,1]], b8=[[29,2],[null,2],[36,1],[35,1]];
-      const LA=[[5,1],[12,1],[17,1],[null,3]], LE=[[0,1],[12,1],[16,1],[null,3]], R6=[[null,6]];
-      return [...songStrokes([...b1,...b2,...b3,...b4,...b1,...b2,...b7,...b8],0,o),
-              ...songStrokes([...R6,...LA,...LE,...LA,...R6,...LA,...LE,...LA],3,o)]; } },
   { id:'night', title:'夜跑（原创电子）', icon:'🌃', ink:8, meta:'原创 · 13 种乐器 · 8-bit 和电吉他齐奏主旋律 · 8 页 · 约 1 分钟',
     tip:'前奏 → 主歌 → 主歌加花 → 推进 → 高潮 → 间奏（副歌主题放慢）→ 最后的高潮 → 尾声，一页一段。高潮里 8-bit 和电吉他一起弹主旋律，铜管在下面配三度。<b>试试：</b>打开网格和 Pages，看看推进那页的军鼓怎么越敲越密。',
     settings:{key:4,scale:'minor',range:3,quant:'16',bpm:124},
