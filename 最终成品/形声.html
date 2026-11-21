@@ -1612,8 +1612,8 @@ const SONGS=[
             [[...end.map(r=>[r+2,2]),[9,4]],13],[[...end.map(r=>[r+4,2]),[11,4]],13],
             [[[null,12],[7,4]],10],[[[null,12],[21,4]],2]);
       return out; } },
-  { id:'ode', title:'欢乐颂（交响版）', icon:'🎺', ink:9, meta:'贝多芬 · 完整主题奏两遍 · 室内乐 → 全乐队 · 11 种乐器 · 8 页',
-    tip:'完整的主题是 A → A\' → B → A\' 四句，一页一句，一共奏两遍。第一遍从长笛独奏开始，弦乐、拨弦一样样加进来；第 4 页最后一拍通鼓滚奏，第二遍铜管领奏、全乐队一起上，最后停在一个大的 C 大调和弦上。<b>试试：</b>比较第 1 页和第 5 页：同一句旋律，配器不一样，听起来差多少。',
+  { id:'ode', title:'欢乐颂（交响版）', icon:'🎺', ink:9, meta:'贝多芬 · 完整主题奏两遍 · 一开场就是乐队 · 11 种乐器 · 8 页',
+    tip:'完整的主题是 A → A\' → B → A\' 四句，一页一句，一共奏两遍。第一遍一开场就是弦乐、长笛、竖琴、合唱和鼓组一起；第 4 页最后一拍通鼓滚奏，第二遍铜管领奏、全乐队一起上，最后停在一个大的 C 大调和弦上。<b>试试：</b>比较第 1 页和第 5 页：同一句旋律，换成铜管领奏、再加管风琴，听起来差多少。',
     settings:{range:3,quant:'16',bpm:112},
     // C 大调、3 个八度：行 0 = C3，7 = C4，14 = C5，21 = C6。量化 1/16（一拍 4 步），每页 4 小节 = 主题的一句
     parts:()=>{
@@ -1637,22 +1637,27 @@ const SONGS=[
       const roll=dr(D.T,i=>i===3?X16.slice(8):[]);
       const groove=[[crash,DRUM_INK],[dr(D.K,[0,2]),DRUM_INK],[dr(D.S,[1,3]),DRUM_INK],[dr(D.H,X8),DRUM_INK]];
 
-      // ===== 第一遍 · 室内乐 =====
-      // 第 1 页 · A：长笛独奏，竖琴分解和弦，贝斯
-      put(0,[MA,4],[harp(chA),11],[bassH(chA),7]);
-      // 第 2 页 · A'：弦乐轻轻进来，铺一层长音
-      put(1,[MA2,4],[harp(chA2),11],[bassH(chA2),7],[pad(chA2,0),5]);
-      // 第 3 页 · B：拨弦在反拍点和弦，弦乐两层铺底
-      put(2,[MB,4],[harp(chB),11],[bassH(chB),7],[pad(chB,0),5],[pad(chB,1),5],[pizz(chB),1]);
-      // 第 4 页 · A'：弦乐接过旋律，长笛在上面配三度；最后一拍通鼓滚奏，引出第二遍
-      put(3,[MA2,5],[up(MA2,2),4],[harp(chA2),11],[bassH(chA2),7],[pizz(chA2),1],[pad(chA2,0),13],[roll,DRUM_INK]);
+      // ===== 第一遍 · 弦乐和木管乐队（一上来就是乐队，第二遍再加铜管、管风琴，更大） =====
+      const light=[[crash,DRUM_INK],[dr(D.K,[0,2]),DRUM_INK],[dr(D.H,X8),DRUM_INK]];
+      // 第 1 页 · A：弦乐和长笛八度齐奏旋律，竖琴、拨弦、合唱铺底，钟声标出每小节第一拍，底鼓和镲轻轻打拍子
+      put(0,[MA,4],[up(MA,-7),5],[harp(chA),11],[pizz(chA),1],[bassQ(chA),7],[pad(chA,0),13],[pad(chA,1),13],
+            [per(chA,(c,i)=>i%2?[[null,2]]:[[UP[c][2]+7,2]]),2],...light);
+      // 第 2 页 · A'：铜管轻轻吹长音和声，军鼓加进来
+      put(1,[MA2,4],[up(MA2,-7),5],[harp(chA2),11],[pizz(chA2),1],[bassQ(chA2),7],[pad(chA2,0),13],[pad(chA2,1),9],
+            ...light,[dr(D.S,[1,3]),DRUM_INK]);
+      // 第 3 页 · B：长笛领奏，弦乐八分音符分解和弦，合唱和拨弦，鼓组
+      put(2,[MB,4],[strArp(chB),5],[harp(chB),11],[pizz(chB),1],[bassQ(chB),7],[pad(chB,0),13],[pad(chB,1),13],
+            ...light,[dr(D.S,[1,3]),DRUM_INK]);
+      // 第 4 页 · A'：弦乐接过旋律，长笛配三度，铜管和声；最后一拍通鼓滚奏，引出第二遍
+      put(3,[MA2,5],[up(MA2,2),4],[harp(chA2),11],[pizz(chA2),1],[bassQ(chA2),7],[pad(chA2,0),9],[pad(chA2,1),9],[pad(chA2,0),13],
+            [crash,DRUM_INK],[dr(D.K,[0,2]),DRUM_INK],[dr(D.S,[1,3]),DRUM_INK],[dr(D.H,i=>i<3?X8:X8.slice(0,4)),DRUM_INK],[roll,DRUM_INK]);
       // ===== 第二遍 · 全乐队 =====
       // 第 5 页 · A：铜管领奏，弦乐低八度齐奏，长笛三度，合唱铺底，鼓进来
       put(4,[MA,9],[up(MA,-7),5],[up(MA,2),4],[harp(chA),11],[bassQ(chA),7],
-            [pad(chA,0),13],[pad(chA,1),13],...groove);
+            [pad(chA,0),13],[pad(chA,1),13],[per(chA,c=>[[ROOT[c],2]]),10],...groove);
       // 第 6 页 · A'：合唱在铜管下面唱三度，弦乐改成八分音符的分解和弦，钟声标出每小节第一拍
       put(5,[MA2,9],[up(MA2,-2),13],[up(MA2,2),4],[strArp(chA2),5],[harp(chA2),11],[bassQ(chA2),7],[pizz(chA2),1],
-            [per(chA2,(c,i)=>i%2?[[null,2]]:[[UP[c][2]+7>21?UP[c][2]:UP[c][2]+7,2]]),2],...groove,[dr(D.O,[.5,1.5,2.5,3.5]),DRUM_INK]);
+            [per(chA2,(c,i)=>i%2?[[null,2]]:[[UP[c][2]+7>21?UP[c][2]:UP[c][2]+7,2]]),2],[per(chA2,c=>[[ROOT[c],2]]),10],...groove,[dr(D.O,[.5,1.5,2.5,3.5]),DRUM_INK]);
       // 第 7 页 · B：鼓收一点，弦乐继续流动；最后一小节停在 G 和弦上，军鼓滚奏推向结尾
       put(6,[MB,9],[up(MB,2),4],[strArp(chB),5],[harp(chB),11],[bassQ(chB),7],[pad(chB,0),13],[pad(chB,1),13],[pizz(chB),1],
             [crash,DRUM_INK],[dr(D.K,[0,2]),DRUM_INK],[dr(D.H,i=>i<3?X8:[]),DRUM_INK],[dr(D.S,i=>i<3?[1,3]:X16),DRUM_INK]);
