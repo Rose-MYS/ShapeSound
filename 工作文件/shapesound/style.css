@@ -89,6 +89,33 @@ svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke
 .ph-ctl .sel{height:30px;font-size:12px}
 .ph-ctl input[type=range]{width:120px;accent-color:var(--ink)}
 .ph-foot{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-top:8px;font-size:12px;color:var(--muted)}
+/* 大屏曲谱 */
+body.big{grid-template-columns:1fr;grid-template-rows:1fr;padding:0;height:100%;overflow:hidden}
+html:has(body.big){overflow:hidden}
+body.big #side,body.big #inst,body.big #strip,body.big #bar{display:none!important}
+body.big #toast{top:auto;bottom:18px}
+body.big #main{grid-template-rows:1fr;gap:0;height:100vh;height:100dvh}
+body.big #stage{border-radius:0;border:0}
+#bigbar{position:fixed;top:10px;right:10px;z-index:40;display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end;
+  background:var(--ui);border:1px solid var(--uib);border-radius:24px;padding:5px;box-shadow:var(--shadow);max-width:calc(100vw - 20px)}
+#bigbar[hidden]{display:none}
+#bigbar .ib.on{background:var(--ink);color:var(--paper)}
+#bigbar .bbink{border:3px solid var(--ui);box-shadow:0 0 0 1px var(--uib)}
+#bbInks{position:absolute;top:calc(100% + 6px);right:0;display:grid;grid-template-columns:repeat(4,64px);gap:6px;background:var(--ui);
+  border:1px solid var(--uib);border-radius:14px;padding:8px;box-shadow:var(--shadow)}
+#bbInks[hidden]{display:none}
+.bbsw{height:40px;border-radius:10px;color:#fff;font-size:11px;font-weight:600;text-shadow:0 1px 2px rgba(0,0,0,.5);outline-offset:2px}
+.bbsw.on{outline:2px solid var(--ink)}
+/* 新手引导 */
+#tour{position:fixed;inset:0;z-index:60}
+#tour[hidden]{display:none}
+#tourSpot{position:fixed;border-radius:12px;box-shadow:0 0 0 9999px rgba(20,16,10,.55);transition:all .25s;pointer-events:none}
+#tourBubble{position:fixed;background:var(--ui);color:var(--ink);border-radius:14px;padding:14px 16px;box-shadow:0 10px 40px rgba(0,0,0,.3);transition:top .25s,left .25s}
+#tourBubble b{font-size:15px;display:block;margin-bottom:4px}
+#tourBubble p{font-size:13px;line-height:1.6;color:var(--ink)}
+#tourBubble .tc{font-size:11px;color:var(--muted);margin-bottom:2px}
+#tourBubble .tb{display:flex;gap:6px;margin-top:12px;align-items:center}
+#tourBubble .tb span{flex:1}
 /* 引导：按钮闪一闪 */
 @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(226,85,58,.6)}70%{box-shadow:0 0 0 6px rgba(226,85,58,0)}100%{box-shadow:0 0 0 0 rgba(226,85,58,0)}}
 .ib.pulse{animation:pulse 1.3s ease-out infinite;border-color:var(--accent);color:var(--accent)}
