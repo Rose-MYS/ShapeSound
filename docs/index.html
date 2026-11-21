@@ -1621,13 +1621,13 @@ const SONGS=[
       return [...songStrokes([...b1,...b2,...b3,...b4,...b1,...b2,...b7,...b8],0,o),
               ...songStrokes([...R6,...LA,...LE,...LA,...R6,...LA,...LE,...LA],3,o)]; } },
   { id:'night', title:'夜跑（原创电子）', icon:'🌃', ink:8, meta:'原创 · 13 种乐器 · 8-bit 和电吉他齐奏主旋律 · 8 页 · 约 1 分钟',
-    tip:'前奏 → 主歌 → 主歌加花 → 推进 → 高潮 → 间奏 → 最后的高潮 → 尾声，一页一段。高潮里 8-bit 和电吉他一起弹主旋律，铜管在下面配三度。<b>试试：</b>打开网格和 Pages，看看推进那页的军鼓怎么越敲越密。',
+    tip:'前奏 → 主歌 → 主歌加花 → 推进 → 高潮 → 间奏（副歌主题放慢）→ 最后的高潮 → 尾声，一页一段。高潮里 8-bit 和电吉他一起弹主旋律，铜管在下面配三度。<b>试试：</b>打开网格和 Pages，看看推进那页的军鼓怎么越敲越密。',
     settings:{key:4,scale:'minor',range:3,quant:'16',bpm:124},
     // E 自然小调、3 个八度：行 0 = E3，7 = E4，14 = E5，21 = E6。量化 1/16（一拍 4 步），一页 4 小节（16 拍）
     parts:()=>{
       const T=21, D=DR(T), out=[];
       const put=(pg,...list)=>list.forEach(([notes,ink])=>out.push(...songStrokes(notes,ink,{spb:4,top:T,offset:pg*16})));
-      const MAIN=['i','VI','III','VII'], BUILD=['VI','VII','VI','VII'], BRK=['VI','III','VII','i'];   // Em C G D / C D C D / C G D Em
+      const MAIN=['i','VI','III','VII'], BUILD=['VI','VII','VI','VII'], BRK=MAIN;   // Em C G D / C D C D / 间奏和主歌同一套和弦
       const CH={i:[7,9,11],VI:[5,7,9],III:[9,11,13],VII:[6,8,10]}, ROOT={i:7,VI:5,III:2,VII:6};
       const per=(fn,prog=MAIN)=>prog.flatMap(fn);
       const up=(n,k)=>n.map(([r,d])=>[r===null?null:r+k,d]);
@@ -1656,15 +1656,16 @@ const SONGS=[
                   [11,.75],[11,.75],[13,.5],[16,.75],[18,.75],[20,.5],
                   [19,1],[17,.5],[15,.5],[13,1],[15,.5],[17,.5]];
       const hookEnd=[...hook.slice(0,18),[17,.75],[18,.75],[20,.5],[21,2]];
-      const brkMel=[[16,3],[14,1],[13,3],[11,1],[12,2],[13,1],[15,1],[14,4]];
-      const sparkle=(seed,n)=>{ const r=rng(seed), hi=[14,16,18,19,21], pos=new Set();
-        while(pos.size<n) pos.add(Math.floor(r()*64)/4);
-        return [...pos].sort((a,b)=>a-b).flatMap((p,i,arr)=>{ const prev=i?arr[i-1]+.25:0; return [...(p>prev?[[null,p-prev]]:[]),[hi[Math.floor(r()*hi.length)],.25]]; }); };
+      // 间奏旋律：副歌开头的节奏型，每小节只唱一次、尾音拉长，听得出是同一个主题放慢了
+      const brkMel=[[14,.75],[14,.75],[16,.5],[18,2], [12,.75],[12,.75],[14,.5],[16,2],
+                    [11,.75],[11,.75],[13,.5],[16,2], [13,.75],[13,.75],[15,.5],[17,1],[15,1]];
+      // 风铃：只敲当前和弦里的音（高八度），每小节两下，落在第 2 拍后半和第 4 拍，像远处的回声
+      const chime=(prog=MAIN)=>per(c=>{ const [a,b,e]=CH[c]; return [[null,1.5],[e+7,.5],[null,1.5],[b+7,.5]]; },prog);
       const climb=bars(i=>rep([[[14,15,16,18][i],.25]],16),4);          // 每小节高一级的十六分连音
       const run=(from,to,beats,start=0)=>{ const n=beats*4; return [[null,start],...Array.from({length:n},(_,i)=>[Math.round(from+(to-from)*i/(n-1)),.25])].filter(x=>x[0]!==null||x[1]>0); };
 
       // 第 1 页 · 前奏：8-bit 分解和弦、合唱铺底，后两小节底鼓进来，最后一拍军鼓滚奏
-      put(0,[arp8(),8],[pad(0),13],[pad(2),13],[sparkle(7,6),6],
+      put(0,[arp8(),8],[pad(0),13],[pad(2),13],[chime().map(([r,d],i)=>i<8?[null,d]:[r,d]),6],
             [dr(D.H,OFF),DRUM_INK],[dr(D.K,i=>i>=2?[0,1,2,3]:[]),DRUM_INK],[dr(D.S,i=>i===3?[3,3.25,3.5,3.75]:[]),DRUM_INK]);
       // 第 2 页 · 主歌：四拍底鼓、反拍贝斯和电钢琴，8-bit 唱主旋律
       put(1,[leadA,8],[bassOff(),7],[stab(0),12],[stab(1),12],[stab(2),12],[pad(0),13],
@@ -1678,14 +1679,18 @@ const SONGS=[
             [dr(D.K,i=>i<3?[0,1,2,3]:[0]),DRUM_INK],[dr(D.S,i=>[[0,1,2,3],X8,X16,X16][i]),DRUM_INK],[dr(D.T,i=>i===3?X16.slice(8):[]),DRUM_INK]);
       // 第 5 页 · 高潮：8-bit 和电吉他（低八度）齐奏副歌，弦乐三层铺底，滚动的贝斯，整套鼓
       put(4,[hook,8],[up(hook,-7),15],[pad(0),5],[pad(1),5],[pad(2),5],[arp16(),1],[bassDrop(),7],[stab(0),12],[stab(2),12],
-            [crash,DRUM_INK],[dr(D.K,[0,1,2,3]),DRUM_INK],[dr(D.S,[1,3]),DRUM_INK],[dr(D.H,X16),DRUM_INK],[dr(D.O,OFF),DRUM_INK]);
+            [run(21,7,1,15),11],
+            [crash,DRUM_INK],[dr(D.K,i=>i<3?[0,1,2,3]:[0,1,2]),DRUM_INK],[dr(D.S,i=>i<3?[1,3]:[1,2.5,2.75]),DRUM_INK],
+            [dr(D.H,i=>i<3?X16:X16.slice(0,12)),DRUM_INK],[dr(D.O,i=>i<3?OFF:OFF.slice(0,3)),DRUM_INK]);
       // 第 6 页 · 间奏：鼓停下来，钢琴分解和弦，长笛慢慢唱，最后一小节军鼓和 8-bit 冲回高潮
       put(5,[per(c=>{ const [a,b,e]=CH[c]; return [a,e,a+7,b+7,e+7,b+7,a+7,e].map(r=>[r,.5]); },BRK),0],
-            [per(c=>[[ROOT[c],4]],BRK),0],[brkMel,4],[pad(0,BRK),13],[pad(2,BRK),13],[sparkle(23,8),6],
-            [run(7,21,4,12),8],[dr(D.H,i=>i<3?X8:[]),DRUM_INK],[dr(D.S,i=>i===3?X16:[]),DRUM_INK]);
+            [per(c=>[[ROOT[c],4]],BRK),0],[brkMel,4],[pad(0,BRK),13],[pad(2,BRK),13],[chime(BRK),6],
+            [[[7,4],[null,12]],5],[[[9,4],[null,12]],5],[[[11,4],[null,12]],5],[[[7,8],[5,8]],7],
+            [run(7,21,4,12),8],[crash,DRUM_INK],[dr(D.K,i=>i<3?[0]:[0,1,2,3]),DRUM_INK],
+            [dr(D.S,i=>i<3?[2]:X16),DRUM_INK],[dr(D.H,i=>i<3?X8:[]),DRUM_INK]);
       // 第 7 页 · 最后的高潮：副歌再来一遍，铜管配三度，马林巴、风铃加进来，最后一小节通鼓过门
       put(6,[hookEnd,8],[up(hookEnd,-7),15],[up(hookEnd,-2),9],[pad(0),5],[pad(1),5],[pad(2),5],[pad(0,MAIN,7),13],
-            [arp16(),1],[arp16(MAIN,7).map(([r,d])=>[r>T?r-7:r,d]),3],[bassDrop(),7],[stab(0),12],[stab(1),12],[stab(2),12],[sparkle(41,10),6],
+            [arp16(),1],[arp16(MAIN,7).map(([r,d])=>[r>T?r-7:r,d]),3],[bassDrop(),7],[stab(0),12],[stab(1),12],[stab(2),12],[chime(),6],
             [crash,DRUM_INK],[dr(D.K,i=>i<3?[0,1,2,2.75,3]:[0,1,2]),DRUM_INK],[dr(D.S,i=>i<3?[1,3]:[1]),DRUM_INK],
             [dr(D.H,i=>i<3?X16:X16.slice(0,8)),DRUM_INK],[dr(D.O,OFF),DRUM_INK],[dr(D.T,i=>i===3?X16.slice(8):[]),DRUM_INK]);
       // 第 8 页 · 尾声：8-bit 分解和弦回来（和前奏呼应），乐器一层层退下，结束在一个大的 E 小调和弦上
